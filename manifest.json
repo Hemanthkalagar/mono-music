@@ -1,0 +1,38 @@
+{
+  "name": "mono Music // High-Fidelity Phonograph",
+  "short_name": "mono Music",
+  "description": "Vintage Vinyl Phonograph & High-Fidelity Telugu Music Engine",
+  "start_url": "/",
+  "id": "mono-music-pwa",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f9f8f5",
+  "theme_color": "#111111",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["music", "entertainment"],
+  "shortcuts": [
+    {
+      "name": "Desktop Console",
+      "url": "/",
+      "description": "Vintage Turntable Desktop Console"
+    },
+    {
+      "name": "Mobile Turntable",
+      "url": "/mobile",
+      "description": "Mobile Vintage Turntable Deck"
+    }
+  ]
+}

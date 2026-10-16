@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>mono Music — Mobile Vintage Vinyl Turntable (Telugu 2000-2026)</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23111111'/><circle cx='50' cy='50' r='18' fill='%23faf9f5'/><circle cx='50' cy='50' r='6' fill='%23111111'/></svg>">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#111111">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="mono Music">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+
+  <!-- Primary Meta Tags & Google Search Optimization -->
+  <meta name="description" content="mono Music Mobile — Vintage Vinyl Turntable Player for Telugu Music. Stream authentic Telugu hits in high fidelity.">
+  <meta name="keywords" content="mono music, mono music mobile, telugu songs, telugu vinyl player, mobile telugu music, telugu mp3">
+  <meta name="robots" content="index, follow">
+
+  <!-- Typography: Playfair Display, Courier Prime, Space Grotesk -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            paper: '#f9f8f5',
+            ink: '#111111',
+            muted: '#666666',
+            card: '#f4f1ea',
+            faint: '#eae7dc',
+          },
+          fontFamily: {
+            serif: ['Playfair Display', 'serif'],
+            mono: ['Courier Prime', 'monospace'],
+            sans: ['Space Grotesk', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* 1964 Vintage Paper Background Pattern */
+    body {
+      background-color: #f9f8f5;
+      color: #111111;
+      background-image: radial-gradient(#111111 0.75px, transparent 0.75px);
+      background-size: 20px 20px;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    /* Vinyl Grooves Texture */
+    .vinyl-disk {
+      background: repeating-radial-gradient(
+        circle at 50% 50%,
+        #141414 0px,
+        #141414 2px,
+        #242424 3px,
+        #141414 4px
+      );
+      box-shadow: 0 12px 28px -6px rgba(0,0,0,0.4), inset 0 0 10px rgba(255,255,255,0.08);
+      transition: transform 0.1s linear;
+    }
+
+    /* Tonearm Mechanical Dynamics */
+    #tonearm {
+      transform-origin: 24px 24px;
+      transition: transform 1.1s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    .tonearm-playing {
+      transform: rotate(26deg);
+    }
+    .tonearm-idle {
+      transform: rotate(0deg);
+    }
+
+    /* Custom Seek Range Bar */
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type=range]:focus {
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      background: #e2dfd5;
+      height: 4px;
+      border-radius: 9999px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 16px;
+      width: 16px;
+      border-radius: 50%;
+      background: #111111;
+      margin-top: -6px;
+      box-shadow: 0 0 0 2px #ffffff;
+      transition: transform 0.12s;
+    }
+    input[type=range]:active::-webkit-slider-thumb {
+      transform: scale(1.25);
+    }
+
+    /* VU Ballistic Needle */
+    .vu-needle {
+      transform-origin: 50% 90%;
+      transition: transform 0.04s ease-out;
+    }
+
+    /* Vintage Paper & Ink Borders */
+    .classic-border {
+      border: 1.5px solid #1a1a1a;
+      box-shadow: 3px 3px 0px #1a1a1a;
+    }
+    .classic-border-sm {
+      border: 1px solid #1a1a1a;
+      box-shadow: 2px 2px 0px #1a1a1a;
+    }
+    .classic-btn {
+      border: 1.5px solid #1a1a1a;
+      box-shadow: 2px 2px 0px #1a1a1a;
+      transition: all 0.08s ease;
+      cursor: pointer;
+    }
+    .classic-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 0px 0px 0px #1a1a1a;
+    }
+
+    /* Interactive Acoustic Broadcast Emblem Animation */
+    .acoustic-broadcasting #logo-wave-1 {
+      animation: acousticPulse1 1.4s ease-in-out infinite;
+    }
+    .acoustic-broadcasting #logo-wave-2 {
+      animation: acousticPulse2 1.4s ease-in-out 0.25s infinite;
+    }
+    @keyframes acousticPulse1 {
+      0%, 100% { opacity: 0.35; transform: scale(0.95); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+    @keyframes acousticPulse2 {
+      0%, 100% { opacity: 0.2; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.1); }
+    }
+
+    /* Hide standard scrollbars */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-3 sm:p-6 antialiased selection:bg-ink selection:text-paper max-w-lg mx-auto">
+
+  <!-- Hidden Local Audio File Uploader -->
+  <input type="file" id="file-uploader" accept="audio/*" multiple class="hidden" />
+
+  <!-- Real Audio Engine -->
+  <audio id="audio-engine" preload="auto" crossorigin="anonymous"></audio>
+
+  <!-- ================= 1. MOBILE TOP HEADER ================= -->
+  <header class="w-full flex items-center justify-between border-b-2 border-ink pb-3 mb-4">
+    <div class="flex items-center gap-3">
+      <!-- Interactive Vintage Acoustic Monogram Emblem -->
+      <button id="interactive-logo" class="relative group focus:outline-none" title="mono Music • Tap for Chime">
+        <div id="logo-badge-container" class="w-10 h-10 border-2 border-ink bg-ink text-paper rounded flex items-center justify-center classic-btn relative overflow-hidden">
+          <div class="absolute inset-[2px] border border-paper/20 rounded-[2px] pointer-events-none"></div>
+          <div class="flex items-center justify-center relative z-10 select-none pl-0.5">
+            <span class="font-serif text-2xl font-bold italic leading-none text-paper pr-0.5 tracking-tight">M</span>
+            <svg class="w-3.5 h-5 -ml-0.5 text-paper stroke-current fill-none" viewBox="0 0 10 16" stroke-linecap="round">
+              <path id="logo-wave-1" d="M2 5a4.5 4.5 0 0 1 0 6" stroke-width="1.8"></path>
+              <path id="logo-wave-2" d="M6 2.5a8.5 8.5 0 0 1 0 11" stroke-width="1.8"></path>
+            </svg>
+          </div>
+        </div>
+      </button>
+
+      <div>
+        <div class="flex items-center gap-1.5">
+          <h1 class="font-serif text-2xl font-bold tracking-tight uppercase leading-none">
+            mono Music
+          </h1>
+          <span class="font-mono text-[9px] uppercase px-1.5 py-0.5 border border-ink rounded bg-paper text-ink font-bold">TELUGU</span>
+        </div>
+        <p class="font-mono text-[10px] text-muted tracking-widest mt-0.5">
+          telugu 2000-2026 // mobile edition
+        </p>
+      </div>
+    </div>
+
+    <!-- Quick Status / Import Action -->
+    <div class="flex items-center gap-2">
+      <button id="header-sleep-btn" class="font-mono text-[10px] font-bold px-2 py-1 border border-ink rounded bg-paper text-ink classic-btn" title="Sleep Timer">
+        <span id="header-sleep-label">SLEEP: OFF</span>
+      </button>
+      <button id="header-import-btn" class="classic-btn p-1.5 bg-paper text-ink rounded hover:bg-faint" title="Import Local Audio">
+        <svg class="w-4 h-4 stroke-current fill-none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= 2. THE VINTAGE TURNTABLE UNIT ================= -->
+  <section class="w-full bg-card rounded-lg classic-border p-4 mb-5 relative overflow-hidden">
+    
+    <!-- Console Status Plate -->
+    <div class="flex items-center justify-between border-b border-faint pb-2.5 mb-3.5">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full border border-ink transition-colors" id="motor-light"></span>
+        <span class="font-mono text-[11px] uppercase tracking-wider text-ink font-bold" id="deck-status">DECK IDLE</span>
+      </div>
+      
+      <!-- Vintage Surface Crackle Switch -->
+      <button id="toggle-crackle" class="font-mono text-[10px] px-2 py-0.5 border border-ink rounded bg-paper hover:bg-ink hover:text-white transition flex items-center gap-1.5 classic-btn" title="Toggle Vinyl Surface Noise">
+        <span class="w-1.5 h-1.5 rounded-full bg-ink" id="crackle-dot"></span>
+        <span>CRACKLE: <b id="crackle-status">ON</b></span>
+      </button>
+    </div>
+
+    <!-- Turntable Platter Deck with Spinning Vinyl Record & Tonearm -->
+    <div id="drop-zone" class="relative w-full aspect-square max-w-[340px] mx-auto flex items-center justify-center bg-paper rounded-full border-4 border-ink shadow-inner p-3 cursor-pointer" title="Tap to Play / Pause Motor">
+      
+      <!-- Spinning Vinyl Disc (Rotates Clockwise 33⅓ RPM) -->
+      <div id="vinyl-platter" class="w-full h-full rounded-full vinyl-disk flex items-center justify-center relative">
+        
+        <!-- Classic Paper Center Label -->
+        <div class="w-32 h-32 sm:w-36 sm:h-36 rounded-full bg-paper border-4 border-ink flex flex-col items-center justify-center p-2.5 text-center shadow-md select-none pointer-events-none">
+          <span class="font-mono text-[7px] uppercase tracking-widest text-muted border-b border-muted pb-0.5">TELUGU MASTER AUDIO</span>
+          <h3 id="vinyl-label-title" class="font-serif font-bold text-xs text-ink mt-1 uppercase line-clamp-1 max-w-[110px]">CHUTTAMALLE</h3>
+          <p id="vinyl-label-artist" class="font-mono text-[8.5px] text-muted mt-0.5 line-clamp-1 max-w-[110px]">ANIRUDH RAVICHANDER</p>
+          <span id="vinyl-label-side" class="font-serif text-[9px] italic text-ink mt-0.5 font-semibold">Devara Part 1 • 2024</span>
+          
+          <!-- Spindle Center Hole -->
+          <div class="w-3.5 h-3.5 rounded-full bg-ink border-2 border-card mt-1 shadow-sm"></div>
+        </div>
+      </div>
+
+      <!-- Realistic Stylus Tonearm -->
+      <div class="absolute -top-2 -right-2 w-32 h-44 pointer-events-none select-none z-10">
+        <svg id="tonearm" class="tonearm-idle w-full h-full" viewBox="0 0 160 220" fill="none">
+          <!-- Pivot Base & Counterweight -->
+          <circle cx="24" cy="24" r="18" fill="#faf9f5" stroke="#111111" stroke-width="2.5"/>
+          <circle cx="24" cy="24" r="11" fill="#111111"/>
+          <circle cx="24" cy="24" r="4.5" fill="#faf9f5"/>
+          <rect x="18" y="2" width="12" height="6" rx="1.5" fill="#111111"/>
+          <!-- Arm Tube -->
+          <path d="M 24 24 Q 45 95 85 145 L 105 170" stroke="#111111" stroke-width="4.5" stroke-linecap="round"/>
+          <path d="M 24 24 Q 45 95 85 145 L 105 170" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round"/>
+          <!-- Cartridge Head & Stylus Needle -->
+          <rect x="98" y="165" width="16" height="24" rx="1.5" transform="rotate(22 98 165)" fill="#111111" stroke="#ffffff" stroke-width="0.8"/>
+          <line x1="114" y1="187" x2="118" y2="194" stroke="#111111" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+    </div>
+
+    <!-- Scrubber Seek Bar & Stylus Timestamps -->
+    <div class="mt-4 space-y-1">
+      <div class="flex items-center justify-between font-mono text-[10px] text-muted">
+        <span id="time-current">0:00</span>
+        <span class="font-serif italic text-ink" id="now-playing-subtext">Stylus positioned at Track I</span>
+        <span id="time-total">3:42</span>
+      </div>
+      <input 
+        type="range" 
+        id="seek-slider" 
+        min="0" 
+        max="222" 
+        value="0" 
+        step="0.1"
+        class="w-full"
+      />
+    </div>
+
+    <!-- Master Transport Hi-Fi Buttons -->
+    <div class="mt-3.5 pt-3 border-t border-faint flex items-center justify-between gap-2">
+      
+      <!-- Prev Track -->
+      <button id="btn-prev" class="classic-btn w-10 h-10 bg-paper text-ink rounded flex items-center justify-center hover:bg-faint" title="Previous Track">
+        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+          <polygon points="19 20 9 12 19 4 19 20"></polygon>
+          <rect x="5" y="4" width="2.5" height="16" rx="0.5"></rect>
+        </svg>
+      </button>
+
+      <!-- Big Master Play / Stop Motor -->
+      <button id="btn-play" class="classic-btn flex-1 h-10 bg-ink text-paper rounded flex items-center justify-center gap-2 font-mono text-xs font-bold tracking-wider hover:bg-black uppercase">
+        <span id="play-icon-wrap" class="flex items-center">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+            <polygon points="6 4 20 12 6 20 6 4"></polygon>
+          </svg>
+        </span>
+        <span id="play-btn-text">START MOTOR</span>
+      </button>
+
+      <!-- Next Track -->
+      <button id="btn-next" class="classic-btn w-10 h-10 bg-paper text-ink rounded flex items-center justify-center hover:bg-faint" title="Next Track">
+        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+          <polygon points="5 4 15 12 5 20 5 4"></polygon>
+          <rect x="16.5" y="4" width="2.5" height="16" rx="0.5"></rect>
+        </svg>
+      </button>
+
+    </div>
+
+    <!-- Secondary Console Buttons (Repeat, Speed, Volume) -->
+    <div class="mt-2.5 pt-2 border-t border-faint flex items-center justify-between gap-2 font-mono text-[10px]">
+      <button id="btn-repeat" class="classic-btn px-2.5 py-1 bg-paper text-ink rounded font-bold hover:bg-faint" title="Toggle Repeat Mode">
+        <span id="repeat-label">REPEAT: OFF</span>
+      </button>
+      <button id="btn-speed" class="classic-btn px-2.5 py-1 bg-paper text-ink rounded font-bold hover:bg-faint" title="Toggle Speed">
+        <span id="speed-label">33 RPM</span>
+      </button>
+      <div class="flex items-center gap-1.5 flex-1 max-w-[130px] ml-auto">
+        <span class="text-[9px] text-muted">VOL</span>
+        <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.8" class="flex-1" />
+      </div>
+    </div>
+
+    <!-- Dual Channel Analog VU Decibel Meters -->
+    <div class="mt-3.5 pt-3 border-t border-faint grid grid-cols-2 gap-2">
+      <!-- VU Left -->
+      <div class="bg-paper p-1.5 rounded border border-ink flex flex-col justify-between h-14 relative overflow-hidden">
+        <div class="flex justify-between items-center text-[8px] font-mono font-bold text-muted border-b border-faint pb-0.5">
+          <span>VU LEFT</span>
+          <span class="text-ink">CH 1</span>
+        </div>
+        <div class="relative w-full h-7 overflow-hidden">
+          <svg class="w-full h-10 absolute -bottom-1" viewBox="0 0 100 40">
+            <path d="M 10 35 A 40 40 0 0 1 90 35" fill="none" stroke="#e2dfd5" stroke-width="2"/>
+            <line x1="20" y1="28" x2="23" y2="24" stroke="#111111" stroke-width="1"/>
+            <line x1="50" y1="18" x2="50" y2="13" stroke="#111111" stroke-width="1.2"/>
+            <line x1="80" y1="28" x2="77" y2="24" stroke="#b91c1c" stroke-width="1"/>
+            <!-- Ballistic Needle -->
+            <line id="vu-needle-left" class="vu-needle" x1="50" y1="36" x2="50" y2="12" stroke="#111111" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- VU Right -->
+      <div class="bg-paper p-1.5 rounded border border-ink flex flex-col justify-between h-14 relative overflow-hidden">
+        <div class="flex justify-between items-center text-[8px] font-mono font-bold text-muted border-b border-faint pb-0.5">
+          <span>VU RIGHT</span>
+          <span class="text-ink">CH 2</span>
+        </div>
+        <div class="relative w-full h-7 overflow-hidden">
+          <svg class="w-full h-10 absolute -bottom-1" viewBox="0 0 100 40">
+            <path d="M 10 35 A 40 40 0 0 1 90 35" fill="none" stroke="#e2dfd5" stroke-width="2"/>
+            <line x1="20" y1="28" x2="23" y2="24" stroke="#111111" stroke-width="1"/>
+            <line x1="50" y1="18" x2="50" y2="13" stroke="#111111" stroke-width="1.2"/>
+            <line x1="80" y1="28" x2="77" y2="24" stroke="#b91c1c" stroke-width="1"/>
+            <!-- Ballistic Needle -->
+            <line id="vu-needle-right" class="vu-needle" x1="50" y1="36" x2="50" y2="12" stroke="#111111" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ================= 3. MUSIC LIBRARY, SEARCH & FULL ALBUMS ================= -->
+  <section class="w-full bg-card rounded-lg classic-border p-4 flex flex-col relative">
+    
+    <!-- Top Filter Tabs -->
+    <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2 mb-3 font-mono text-[10px] font-bold">
+      <button class="filter-btn px-2.5 py-1 bg-ink text-paper rounded classic-btn flex-shrink-0" data-filter="all">ALL</button>
+      <button class="filter-btn px-2.5 py-1 bg-paper text-ink rounded classic-btn flex-shrink-0" data-filter="mass">MASS 🔥</button>
+      <button class="filter-btn px-2.5 py-1 bg-paper text-ink rounded classic-btn flex-shrink-0" data-filter="melody">MELODIES 🎵</button>
+      <button class="filter-btn px-2.5 py-1 bg-paper text-ink rounded classic-btn flex-shrink-0" data-filter="romantic">ROMANTIC ❤️</button>
+      <button class="filter-btn px-2.5 py-1 bg-paper text-ink rounded classic-btn flex-shrink-0" data-filter="folk">FOLK SONGS 🪕</button>
+      <button class="filter-btn px-2.5 py-1 bg-paper text-ink rounded classic-btn flex-shrink-0 flex items-center gap-1" data-filter="liked">
+        <span>LIKED SONGS ♥</span>
+        <span class="px-1 bg-red-600 text-white rounded-full text-[8px]" id="liked-count">0</span>
+      </button>
+      <button class="filter-btn px-2.5 py-1 bg-paper text-ink rounded classic-btn flex-shrink-0" data-filter="uploads">UPLOADS</button>
+    </div>
+
+    <!-- Search Input Bar with Instant Clear -->
+    <div class="relative mb-3">
+      <div class="flex items-center bg-paper border-2 border-ink rounded classic-border-sm px-2.5 py-1.5">
+        <svg class="w-4 h-4 text-muted mr-2 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input 
+          type="text" 
+          id="search-input" 
+          placeholder="Search movie (Pushpa, Devara...) or song..." 
+          class="bg-transparent text-ink placeholder-muted font-mono text-xs w-full focus:outline-none"
+          autocomplete="off"
+        />
+        <button id="search-clear" class="hidden text-muted hover:text-ink font-bold text-xs px-1">✕</button>
+      </div>
+
+      <!-- Live Search Suggestions Popup -->
+      <div id="search-suggestions" class="hidden absolute top-full left-0 right-0 z-50 bg-paper border-2 border-ink rounded mt-1 shadow-lg max-h-60 overflow-y-auto no-scrollbar font-mono text-xs divide-y divide-faint">
+      </div>
+    </div>
+
+    <!-- Top Matched Movie Album Card (e.g. Devara, Pushpa) -->
+    <div id="search-album-card" class="hidden mb-3 p-2.5 bg-paper border-2 border-ink rounded classic-border-sm flex items-center justify-between cursor-pointer hover:bg-faint transition">
+      <div class="flex items-center gap-2.5 overflow-hidden">
+        <img id="search-album-img" src="" class="w-10 h-10 rounded border border-ink object-cover flex-shrink-0" />
+        <div class="truncate">
+          <p class="font-serif font-bold text-xs text-ink truncate" id="search-album-title">Movie Album</p>
+          <p class="font-mono text-[9px] text-muted truncate" id="search-album-sub">Original Telugu Movie Album • Tap to open</p>
+        </div>
+      </div>
+      <span class="font-mono text-[10px] font-bold px-2 py-0.5 bg-ink text-paper rounded">OPEN ›</span>
+    </div>
+
+    <!-- Full Movie Album View Banner (When an album is opened) -->
+    <div id="album-view-banner" class="hidden mb-3 p-3 bg-paper border-2 border-ink rounded classic-border-sm flex items-center justify-between">
+      <div class="flex items-center gap-3 overflow-hidden">
+        <img id="album-view-img" src="" class="w-12 h-12 rounded border border-ink object-cover flex-shrink-0" />
+        <div class="truncate">
+          <div class="flex items-center gap-1.5">
+            <span class="font-mono text-[9px] font-bold px-1 bg-ink text-paper rounded">ALBUM</span>
+            <p class="font-serif font-bold text-sm text-ink truncate" id="album-view-title">Movie Name</p>
+          </div>
+          <p class="font-mono text-[10px] text-muted truncate mt-0.5" id="album-view-composer">Tollywood Soundtracks</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5 flex-shrink-0">
+        <button id="album-play-all-btn" class="font-mono text-[9px] font-bold px-2 py-1 bg-ink text-paper rounded hover:bg-black">PLAY ALL</button>
+        <button id="album-close-btn" class="font-mono text-[10px] font-bold px-1.5 py-1 border border-ink rounded bg-paper hover:bg-faint" title="Back to All Songs">✕</button>
+      </div>
+    </div>
+
+    <!-- Tracklist Header -->
+    <div class="flex items-center justify-between border-b-2 border-ink pb-1 mb-2 font-mono text-[10px] font-bold text-muted">
+      <span>TELUGU ARCHIVE</span>
+      <span id="track-count-badge">0 TRACKS</span>
+    </div>
+
+    <!-- Scrollable Tracklist Container -->
+    <div class="space-y-1 overflow-y-auto max-h-[380px] pr-1 divide-y divide-ink/10" id="tracklist-container">
+      <!-- Tracks populated dynamically -->
+    </div>
+
+  </section>
+
+  <!-- ================= 4. MOBILE FOOTER ================= -->
+  <footer class="mt-4 pt-3 border-t border-faint text-center font-mono text-[9px] text-muted tracking-widest uppercase">
+    mono music // vintage vinyl engine 1964 // high-fidelity telugu
+  </footer>
+
+  <!-- Master Authentic Telugu Songs Catalog -->
+  <script src="telugu_master_catalog.js"></script>
+
+  <!-- Application Logic & Web Audio Vinyl Engine -->
+  <script>
+    // --- State Variables ---
+    let RECORD_TRACKS = [];
+    let currentIdx = 0;
+    let isMotorRunning = false;
+    let is33RPM = true;
+    let isRepeatOn = false;
+    let repeatMode = 0; // 0=OFF, 1=ALL, 2=ONE
+    let isCrackleOn = true;
+    let volume = 0.8;
+    let currentSeconds = 0;
+    let isTransitioning = false;
+    let masterTimer = null;
+    let activeFilter = 'all';
+    let searchQuery = '';
+    let selectedYear = '';
+    let streamPage = 1;
+    let hasMoreStream = true;
+    let isStreaming = false;
+
+    // Sleep Timer
+    let sleepMode = 0; // 0=OFF, 1=15M, 2=30M, 3=60M
+    let sleepRemainingSec = 0;
+    let sleepTimerInterval = null;
+
+    // Album View Mode
+    let isAlbumMode = false;
+    let currentAlbumTracks = [];
+    let topMatchedAlbum = null;
+
+    // Liked Songs
+    let likedSongIds = new Set();
+    let likedSongObjects = {};
+
+    // Turntable Rotation & Ballistic VU Needle Physics
+    let platterRotation = 0;
+    let currentNeedleLeft = -35;
+    let currentNeedleRight = -35;
+
+    // DOM Elements
+    const audioEngine = document.getElementById('audio-engine');
+    const dropZone = document.getElementById('drop-zone');
+    const vinylPlatter = document.getElementById('vinyl-platter');
+    const tonearm = document.getElementById('tonearm');
+    const motorLight = document.getElementById('motor-light');
+    const deckStatus = document.getElementById('deck-status');
+    const toggleCrackleBtn = document.getElementById('toggle-crackle');
+    const crackleDot = document.getElementById('crackle-dot');
+    const crackleStatus = document.getElementById('crackle-status');
+
+    // Platter Center Labels
+    const vinylLabelTitle = document.getElementById('vinyl-label-title');
+    const vinylLabelArtist = document.getElementById('vinyl-label-artist');
+    const vinylLabelSide = document.getElementById('vinyl-label-side');
+
+    // Transport Controls
+    const btnPlay = document.getElementById('btn-play');
+    const playBtnText = document.getElementById('play-btn-text');
+    const playIconWrap = document.getElementById('play-icon-wrap');
+    const btnPrev = document.getElementById('btn-prev');
+    const btnNext = document.getElementById('btn-next');
+    const btnRepeat = document.getElementById('btn-repeat');
+    const repeatLabel = document.getElementById('repeat-label');
+    const btnSpeed = document.getElementById('btn-speed');
+    const speedLabel = document.getElementById('speed-label');
+    const volumeSlider = document.getElementById('volume-slider');
+
+    // Scrubber
+    const seekSlider = document.getElementById('seek-slider');
+    const timeCurrent = document.getElementById('time-current');
+    const timeTotal = document.getElementById('time-total');
+    const nowPlayingSubtext = document.getElementById('now-playing-subtext');
+
+    // VU Needles
+    const vuNeedleLeft = document.getElementById('vu-needle-left');
+    const vuNeedleRight = document.getElementById('vu-needle-right');
+
+    // Filter & Search
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const searchInput = document.getElementById('search-input');
+    const searchClear = document.getElementById('search-clear');
+    const searchSuggestions = document.getElementById('search-suggestions');
+    const tracklistContainer = document.getElementById('tracklist-container');
+    const trackCountBadge = document.getElementById('track-count-badge');
+
+    // Album View
+    const searchAlbumCard = document.getElementById('search-album-card');
+    const searchAlbumImg = document.getElementById('search-album-img');
+    const searchAlbumTitle = document.getElementById('search-album-title');
+    const searchAlbumSub = document.getElementById('search-album-sub');
+    const albumViewBanner = document.getElementById('album-view-banner');
+    const albumViewImg = document.getElementById('album-view-img');
+    const albumViewTitle = document.getElementById('album-view-title');
+    const albumViewComposer = document.getElementById('album-view-composer');
+    const albumPlayAllBtn = document.getElementById('album-play-all-btn');
+    const albumCloseBtn = document.getElementById('album-close-btn');
+
+    // Logo & Sleep
+    const interactiveLogo = document.getElementById('interactive-logo');
+    const logoBadgeContainer = document.getElementById('logo-badge-container');
+    const headerSleepBtn = document.getElementById('header-sleep-btn');
+    const headerSleepLabel = document.getElementById('header-sleep-label');
+    const headerImportBtn = document.getElementById('header-import-btn');
+    const fileUploader = document.getElementById('file-uploader');
+
+    // ================= WEB AUDIO ACOUSTIC SYNTHESIS =================
+    let audioCtx = null;
+    let masterGain = null;
+    let crackleNode = null;
+    let crackleGain = null;
+    let mediaSourceNode = null;
+    let analyserLeft = null;
+    let analyserRight = null;
+    let splitter = null;
+
+    function initAudioGraph() {
+      if (audioCtx) return;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(volume, audioCtx.currentTime);
+
+        // Dual Channel Stereo Splitter & Analysers for Realistic VU Ballistic Meters
+        splitter = audioCtx.createChannelSplitter(2);
+        analyserLeft = audioCtx.createAnalyser();
+        analyserRight = audioCtx.createAnalyser();
+        analyserLeft.fftSize = 256;
+        analyserRight.fftSize = 256;
+
+        masterGain.connect(splitter);
+        splitter.connect(analyserLeft, 0);
+        splitter.connect(analyserRight, 1);
+        masterGain.connect(audioCtx.destination);
+
+        try {
+          mediaSourceNode = audioCtx.createMediaElementSource(audioEngine);
+          mediaSourceNode.connect(masterGain);
+        } catch(e) {}
+
+        if (isCrackleOn) startVinylCrackle();
+      } catch(e) {}
+    }
+
+    function startVinylCrackle() {
+      if (!audioCtx || crackleNode) return;
+      const bufferSize = audioCtx.sampleRate * 2;
+      const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      let crackle = 0;
+
+      for (let i = 0; i < bufferSize; i++) {
+        crackle *= 0.96;
+        if (Math.random() < 0.0035) {
+          crackle += (Math.random() * 2 - 1) * 0.7;
+        }
+        output[i] = crackle;
+      }
+
+      crackleNode = audioCtx.createBufferSource();
+      crackleNode.buffer = noiseBuffer;
+      crackleNode.loop = true;
+
+      crackleGain = audioCtx.createGain();
+      crackleGain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+
+      crackleNode.connect(crackleGain);
+      crackleGain.connect(masterGain);
+      crackleNode.start();
+    }
+
+    function stopVinylCrackle() {
+      if (crackleNode) {
+        try { crackleNode.stop(); crackleNode.disconnect(); } catch(e) {}
+        crackleNode = null;
+      }
+    }
+
+    function playLogoChime() {
+      initAudioGraph();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      [587.33, 880, 1174.66].forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.08 / (idx + 1), now + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.3);
+
+        osc.connect(gain);
+        gain.connect(masterGain || audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 1.35);
+      });
+    }
+
+    // ================= LIKED SONGS ENGINE =================
+    function initLikedSongs() {
+      try {
+        const saved = localStorage.getItem('mono_music_liked');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            parsed.forEach(t => {
+              likedSongIds.add(t.id);
+              likedSongObjects[t.id] = t;
+            });
+          }
+        }
+      } catch(e) {}
+      updateLikedCount();
+    }
+
+    function saveLikedSongsToStorage() {
+      try {
+        const list = Object.values(likedSongObjects);
+        localStorage.setItem('mono_music_liked', JSON.stringify(list));
+      } catch(e) {}
+      updateLikedCount();
+    }
+
+    function updateLikedCount() {
+      const el = document.getElementById('liked-count');
+      if (el) el.textContent = likedSongIds.size;
+    }
+
+    function toggleLikeSong(track) {
+      if (likedSongIds.has(track.id)) {
+        likedSongIds.delete(track.id);
+        delete likedSongObjects[track.id];
+      } else {
+        likedSongIds.add(track.id);
+        likedSongObjects[track.id] = { ...track };
+      }
+      saveLikedSongsToStorage();
+      renderTracklist();
+    }
+
+    // Cross-tab real-time sync with Desktop App
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'mono_music_liked') {
+        try {
+          const list = JSON.parse(e.newValue || '[]');
+          likedSongIds.clear();
+          likedSongObjects = {};
+          if (Array.isArray(list)) {
+            list.forEach(item => {
+              likedSongIds.add(item.id);
+              likedSongObjects[item.id] = item;
+            });
+          }
+        } catch(err) {}
+        updateLikedCount();
+        renderTracklist();
+      }
+    });
+
+    // ================= GENRE CLASSIFIERS & DEDUPLICATION =================
+    function normalizeSongKey(title) {
+      if (!title) return '';
+      let clean = title.split('(')[0].split('-')[0].split('[')[0];
+      return clean.toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+    }
+
+    function deduplicateTracks(list) {
+      const seen = new Set();
+      const seenUrls = new Set();
+      return list.filter(t => {
+        const k = normalizeSongKey(t.title);
+        if (k && seen.has(k)) return false;
+        if (t.audioUrl && seenUrls.has(t.audioUrl)) return false;
+        if (k) seen.add(k);
+        if (t.audioUrl) seenUrls.add(t.audioUrl);
+        return true;
+      });
+    }
+
+    function isMassTrack(t) {
+      if (t.category === 'mass') return true;
+      const text = `${t.title} ${t.movie || ''} ${t.composer || ''} ${t.singers || ''}`.toLowerCase();
+      const massKeys = ['mass', 'dance', 'dhamaka', 'beat', 'naatu', 'pushpa', 'fear', 'ayudha', 'kurchi', 'blockbuster', 'party', 'seeti', 'jigelu', 'kummudu', 'pakka', 'dj', 'whistle', 'top lesi', 'cinema chope', 'dhim', 'ammadu', 'jagadame', 'ye mera', 'mirchi', 'bheem', 'gabbarsingh', 'sarileru', 'daavudi', 'peelings', 'kissik', 'mast', 'ringaa', 'boom', 'bommali', 'lungi', 'dhookudu', 'rowdy', 'chanti', 'shankar'];
+      return massKeys.some(k => text.includes(k));
+    }
+
+    function isMelodyTrack(t) {
+      if (t.category === 'melody') return true;
+      const text = `${t.title} ${t.movie || ''} ${t.composer || ''} ${t.singers || ''}`.toLowerCase();
+      const melKeys = ['melody', 'samajavaragamana', 'butta bomma', 'inthandham', 'samayama', 'chuttamalle', 'dheevara', 'priyathama', 'vellipoke', 'idhe', 'ghal ghal', 'nuvvostanante', 'cheppave', 'parichayamila', 'ney veyrey', 'manasaa', 'kanulanu', 'oopiri', 'pranama', 'nammavemo', 'mellaga', 'andala', 'o ante', 'icchesa', 'saahore', 'sweety', 'sitamma', 'seethamma', 'chiru', 'ninnu', 'telusuna', 'urike', 'gundello', 'priya'];
+      return melKeys.some(k => text.includes(k));
+    }
+
+    function isRomanticTrack(t) {
+      if (t.category === 'romantic') return true;
+      const text = `${t.title} ${t.movie || ''} ${t.composer || ''} ${t.singers || ''}`.toLowerCase();
+      const romKeys = ['romantic', 'love', 'chuttamalle', 'inthandham', 'adhento', 'kissik', 'hrudayama', 'undipo', 'naa kosam', 'andhamaa', 'priya', 'premalo', 'prema', 'gundellonaa', 'hoyna', 'oorantha', 'chirunavve', 'em sandeham', 'daavudi', 'samayama', 'neeli', 'marugelara', 'valachi', 'manasuna', 'ninnu kori', 'geetha', 'anaganaga'];
+      return romKeys.some(k => text.includes(k));
+    }
+
+    function isFolkTrack(t) {
+      if (t.category === 'folk') return true;
+      const text = `${t.title} ${t.movie || ''} ${t.composer || ''} ${t.singers || ''} ${t.genre || ''}`.toLowerCase();
+      const folkKeys = ['folk', 'janapada', 'teenmaar', 'dappu', 'komuram', 'bheem', 'gobbemma', 'bathukamma', 'gangamma', 'pallevasi', 'mallepula', 'saranga', 'dariya', 'bullettu', 'bandi', 'tirupathi', 'ramuloo', 'ramulaa', 'gunzari', 'dj tillu', 'gulaabi', 'jaathara', 'bonalu'];
+      return folkKeys.some(k => text.includes(k));
+    }
+
+    function getFilteredTracks() {
+      if (isAlbumMode) return currentAlbumTracks;
+
+      if (activeFilter === 'liked') {
+        const likedList = Object.values(likedSongObjects);
+        return likedList.filter(t => {
+          if (!searchQuery) return true;
+          const q = searchQuery.toLowerCase().trim();
+          return t.title.toLowerCase().includes(q) || (t.movie && t.movie.toLowerCase().includes(q));
+        });
+      }
+
+      if (activeFilter === 'uploads') {
+        return RECORD_TRACKS.filter(t => t.isUpload);
+      }
+
+      return RECORD_TRACKS.filter(t => {
+        if (activeFilter === 'mass' && !isMassTrack(t)) return false;
+        if (activeFilter === 'melody' && !isMelodyTrack(t)) return false;
+        if (activeFilter === 'romantic' && !isRomanticTrack(t)) return false;
+        if (activeFilter === 'folk' && !isFolkTrack(t)) return false;
+
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase().trim();
+          const text = `${t.title} ${t.movie || ''} ${t.composer || ''} ${t.singers || ''} ${t.genre || ''}`.toLowerCase();
+          return text.includes(q);
+        }
+
+        return true;
+      });
+    }
+
+    // ================= OFFLINE DOWNLOAD =================
+    function downloadTrack(track) {
+      if (!track || !track.audioUrl) return;
+      const safeTitle = (track.title || 'Telugu_Song').replace(/[^a-zA-Z0-9_\-\s]/g, '').trim().replace(/\s+/g, '_');
+      
+      if (track.isUpload || track.audioUrl.startsWith('data:') || track.audioUrl.startsWith('blob:')) {
+        const a = document.createElement('a');
+        a.href = track.audioUrl;
+        a.download = `${safeTitle}.mp3`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        return;
+      }
+
+      const downloadUrl = `/api/download?url=${encodeURIComponent(track.audioUrl)}&title=${encodeURIComponent(safeTitle)}`;
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `${safeTitle}.m4a`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    // ================= TRACKLIST RENDERING =================
+    function renderTracklist() {
+      tracklistContainer.innerHTML = '';
+      const filtered = getFilteredTracks();
+
+      if (isAlbumMode) {
+        trackCountBadge.textContent = `${currentAlbumTracks.length} ALBUM SONGS`;
+      } else {
+        trackCountBadge.textContent = `${filtered.length} TRACKS`;
+      }
+
+      if (filtered.length === 0) {
+        let emptyMsg = 'No tracks found matching your selection.';
+        if (activeFilter === 'liked') emptyMsg = 'No liked tracks yet. Tap ♡ on any track to save it here.';
+        else if (activeFilter === 'folk') emptyMsg = 'No folk songs found. Tap ALL or search to discover more.';
+        else if (activeFilter === 'mass') emptyMsg = 'No mass beats found. Tap ALL or search to discover more.';
+        else if (activeFilter === 'melody') emptyMsg = 'No melodies found. Tap ALL or search to discover more.';
+        else if (activeFilter === 'romantic') emptyMsg = 'No romantic songs found. Tap ALL or search to discover more.';
+        tracklistContainer.innerHTML = `
+          <div class="p-6 text-center text-muted font-mono text-xs">
+            ${emptyMsg}
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach((track, idx) => {
+        const curTrack = RECORD_TRACKS[currentIdx];
+        const isSelected = curTrack && (curTrack.audioUrl === track.audioUrl || curTrack.id === track.id);
+        const isPlayingThis = isSelected && isMotorRunning;
+        const liked = likedSongIds.has(track.id);
+
+        const row = document.createElement('div');
+        row.className = `p-2 rounded flex items-center justify-between cursor-pointer transition select-none ${isSelected ? 'bg-ink text-paper' : 'hover:bg-faint text-ink'}`;
+
+        row.innerHTML = `
+          <div class="flex items-center gap-2.5 overflow-hidden flex-1 mr-2">
+            <span class="font-mono text-[10px] w-5 text-center flex-shrink-0 ${isSelected ? 'text-paper font-bold' : 'text-muted'}">
+              ${isPlayingThis ? '<span class="font-bold text-xs">▶</span>' : (idx + 1).toString().padStart(2, '0') + '.'}
+            </span>
+            <div class="overflow-hidden">
+              <p class="font-serif text-xs font-bold truncate leading-tight ${isSelected ? 'text-paper' : 'text-ink'}">${track.title}</p>
+              <p class="font-mono text-[9px] truncate mt-0.5 ${isSelected ? 'text-paper/80' : 'text-muted'}">${track.movie || 'Tollywood'}${track.singers ? ' • ' + track.singers : ''}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 font-mono text-[10px] flex-shrink-0">
+            <!-- Download Button -->
+            <button class="download-btn p-1 transition-transform hover:scale-125 ${isSelected ? 'text-paper/70 hover:text-paper' : 'text-muted hover:text-ink'}" title="Download Track">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+            </button>
+            <!-- Heart Like Button -->
+            <button class="like-btn p-1 transition-transform hover:scale-125" title="Like Track">
+              <span class="${liked ? 'text-red-500 font-bold' : (isSelected ? 'text-paper/70 hover:text-red-400' : 'text-muted hover:text-red-500')}">${liked ? '♥' : '♡'}</span>
+            </button>
+            <span class="${isSelected ? 'text-paper font-bold' : 'text-muted'}">${track.duration || '3:30'}</span>
+          </div>
+        `;
+
+        // Direct Like
+        const lBtn = row.querySelector('.like-btn');
+        if (lBtn) {
+          lBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleLikeSong(track);
+          });
+        }
+
+        // Direct Download
+        const dlBtn = row.querySelector('.download-btn');
+        if (dlBtn) {
+          dlBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            downloadTrack(track);
+          });
+        }
+
+        // Click Row to Play
+        row.addEventListener('click', () => {
+          let targetIdx = RECORD_TRACKS.findIndex(t => t.id === track.id || t.audioUrl === track.audioUrl);
+          if (targetIdx === -1) {
+            RECORD_TRACKS.push(track);
+            targetIdx = RECORD_TRACKS.length - 1;
+          }
+          loadTrack(targetIdx);
+          startMotor();
+        });
+
+        tracklistContainer.appendChild(row);
+      });
+    }
+
+    // ================= TRACK LOADING & AUDIO ENGINE =================
+    function loadTrack(idx) {
+      if (idx < 0 || idx >= RECORD_TRACKS.length) return;
+      currentIdx = idx;
+      const track = RECORD_TRACKS[currentIdx];
+
+      // Update Vinyl Center Label
+      vinylLabelTitle.textContent = track.title || 'UNTITLED';
+      vinylLabelArtist.textContent = (track.singers || track.composer || 'Tollywood Artists').toUpperCase();
+      vinylLabelSide.textContent = `${track.movie || 'Tollywood'} • ${track.year || '2024'}`;
+
+      // Update Scrubber & Subtext
+      currentSeconds = 0;
+      timeCurrent.textContent = "0:00";
+      timeTotal.textContent = track.duration || '3:30';
+      seekSlider.value = 0;
+      seekSlider.max = track.durationSec || 210;
+      nowPlayingSubtext.textContent = `Stylus positioned at Track ${currentIdx + 1}`;
+
+      // Audio Engine Setup
+      audioEngine.pause();
+      if (track.audioUrl) {
+        audioEngine.src = track.audioUrl;
+        audioEngine.playbackRate = is33RPM ? 1.0 : 1.36;
+        audioEngine.loop = (repeatMode === 2);
+      }
+
+      // Mobile Lock Screen & Bluetooth Controls
+      if ('mediaSession' in navigator) {
+        try {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: track.title,
+            artist: track.singers || track.composer || 'Tollywood Artists',
+            album: track.movie || 'Telugu Hits',
+            artwork: [
+              { src: track.image || '', sizes: '500x500', type: 'image/jpeg' },
+              { src: track.image || '', sizes: '150x150', type: 'image/jpeg' }
+            ]
+          });
+          navigator.mediaSession.setActionHandler('play', () => startMotor());
+          navigator.mediaSession.setActionHandler('pause', () => stopMotor());
+          navigator.mediaSession.setActionHandler('previoustrack', () => prevTrack());
+          navigator.mediaSession.setActionHandler('nexttrack', () => nextTrack());
+        } catch(err) {}
+      }
+
+      renderTracklist();
+
+      if (isMotorRunning) {
+        audioEngine.play().catch(e => console.warn(e));
+        startMasterTimer();
+      }
+    }
+
+    function startMotor() {
+      isMotorRunning = true;
+      initAudioGraph();
+
+      // UI States
+      tonearm.classList.remove('tonearm-idle');
+      tonearm.classList.add('tonearm-playing');
+      motorLight.classList.remove('bg-paper');
+      motorLight.classList.add('bg-ink');
+      deckStatus.textContent = "MOTOR RUNNING";
+
+      playBtnText.textContent = "STOP MOTOR";
+      playIconWrap.innerHTML = `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1"></rect></svg>`;
+
+      if (audioEngine.src) {
+        audioEngine.play().catch(e => console.warn(e));
+      } else if (RECORD_TRACKS.length > 0) {
+        loadTrack(0);
+        return;
+      }
+
+      startMasterTimer();
+      renderTracklist();
+    }
+
+    function stopMotor() {
+      isMotorRunning = false;
+
+      // Lift Tonearm back to resting cradle
+      tonearm.classList.remove('tonearm-playing');
+      tonearm.classList.add('tonearm-idle');
+      motorLight.classList.remove('bg-ink');
+      motorLight.classList.add('bg-paper');
+      deckStatus.textContent = "DECK IDLE";
+
+      playBtnText.textContent = "START MOTOR";
+      playIconWrap.innerHTML = `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>`;
+
+      audioEngine.pause();
+      stopMasterTimer();
+      renderTracklist();
+    }
+
+    function toggleMotor() {
+      if (isMotorRunning) {
+        stopMotor();
+      } else {
+        startMotor();
+      }
+    }
+
+    // --- Master Timer & Scrubber Progress ---
+    function startMasterTimer() {
+      stopMasterTimer();
+      masterTimer = setInterval(() => {
+        if (!isMotorRunning) return;
+        if (audioEngine.duration) {
+          currentSeconds = audioEngine.currentTime;
+          seekSlider.value = currentSeconds;
+          timeCurrent.textContent = formatTime(currentSeconds);
+          timeTotal.textContent = formatTime(audioEngine.duration);
+        }
+      }, 250);
+    }
+
+    function stopMasterTimer() {
+      if (masterTimer) {
+        clearInterval(masterTimer);
+        masterTimer = null;
+      }
+    }
+
+    function formatTime(s) {
+      if (isNaN(s) || s < 0) return "0:00";
+      const m = Math.floor(s / 60);
+      const sec = Math.floor(s % 60);
+      return `${m}:${sec < 10 ? '0' : ''}${sec}`;
+    }
+
+    // Audio Event Listeners
+    audioEngine.addEventListener('ended', () => {
+      if (repeatMode === 2) {
+        audioEngine.currentTime = 0;
+        audioEngine.play();
+      } else if (repeatMode === 1 || currentIdx < RECORD_TRACKS.length - 1) {
+        nextTrack();
+      } else {
+        stopMotor();
+      }
+    });
+
+    function nextTrack() {
+      if (RECORD_TRACKS.length === 0) return;
+      const filtered = getFilteredTracks();
+      const curTrack = RECORD_TRACKS[currentIdx];
+      const curFilterIdx = filtered.findIndex(t => t.id === curTrack.id);
+
+      if (curFilterIdx !== -1 && filtered.length > 1) {
+        const nextFilterIdx = (curFilterIdx + 1) % filtered.length;
+        const targetTrack = filtered[nextFilterIdx];
+        const gIdx = RECORD_TRACKS.findIndex(t => t.id === targetTrack.id);
+        if (gIdx !== -1) loadTrack(gIdx);
+      } else {
+        const next = (currentIdx + 1) % RECORD_TRACKS.length;
+        loadTrack(next);
+      }
+    }
+
+    function prevTrack() {
+      if (audioEngine.currentTime > 3) {
+        audioEngine.currentTime = 0;
+        return;
+      }
+      if (RECORD_TRACKS.length === 0) return;
+      const filtered = getFilteredTracks();
+      const curTrack = RECORD_TRACKS[currentIdx];
+      const curFilterIdx = filtered.findIndex(t => t.id === curTrack.id);
+
+      if (curFilterIdx !== -1 && filtered.length > 1) {
+        const prevFilterIdx = (curFilterIdx - 1 + filtered.length) % filtered.length;
+        const targetTrack = filtered[prevFilterIdx];
+        const gIdx = RECORD_TRACKS.findIndex(t => t.id === targetTrack.id);
+        if (gIdx !== -1) loadTrack(gIdx);
+      } else {
+        const prev = (currentIdx - 1 + RECORD_TRACKS.length) % RECORD_TRACKS.length;
+        loadTrack(prev);
+      }
+    }
+
+    // ================= REAL-TIME ANIMATION LOOP (VINYL & VU NEEDLES) =================
+    function animLoop() {
+      // Rotate Platter smoothly clockwise when Motor is running
+      if (isMotorRunning) {
+        const speed = is33RPM ? 1.4 : 1.95;
+        platterRotation += speed;
+        if (platterRotation >= 3600000) platterRotation %= 360;
+        vinylPlatter.style.transform = `rotate(${platterRotation}deg)`;
+      }
+
+      // Dual-Channel Stereo Ballistic VU Needle Physics
+      if (isMotorRunning) {
+        let dbL = -20;
+        let dbR = -20;
+        let hasDirectSignal = false;
+
+        if (analyserLeft && analyserRight) {
+          const dataL = new Uint8Array(analyserLeft.fftSize);
+          analyserLeft.getByteTimeDomainData(dataL);
+          let sumSquaresL = 0;
+          for (let i = 0; i < dataL.length; i++) {
+            const dev = (dataL[i] - 128) / 128;
+            sumSquaresL += dev * dev;
+          }
+          const rmsL = Math.sqrt(sumSquaresL / dataL.length);
+
+          const dataR = new Uint8Array(analyserRight.fftSize);
+          analyserRight.getByteTimeDomainData(dataR);
+          let sumSquaresR = 0;
+          for (let i = 0; i < dataR.length; i++) {
+            const dev = (dataR[i] - 128) / 128;
+            sumSquaresR += dev * dev;
+          }
+          const rmsR = Math.sqrt(sumSquaresR / dataR.length);
+
+          if (rmsL > 0.015 || rmsR > 0.015) {
+            hasDirectSignal = true;
+            dbL = (20 * Math.log10(Math.max(0.0005, rmsL))) + 18 + (volume * 4);
+            dbR = (20 * Math.log10(Math.max(0.0005, rmsR))) + 18 + (volume * 4);
+          }
+        }
+
+        // Natural fallback groove if stream is cross-origin
+        if (!hasDirectSignal) {
+          const t = currentSeconds || (Date.now() / 1000);
+          const beatPhase = (t * 1.3) % 1.0;
+          const kickImpact = Math.pow(Math.max(0, 1 - beatPhase * 2.5), 2.2);
+          const grooveL = Math.sin(t * 3.6) * 0.5 + 0.5;
+          const grooveR = Math.cos(t * 3.6) * 0.5 + 0.5;
+          dbL = -20 + ((kickImpact * 0.78 + grooveL * 0.32) * volume * 22);
+          dbR = -20 + ((kickImpact * 0.68 + grooveR * 0.42) * volume * 22);
+        }
+
+        dbL = Math.max(-20, Math.min(3, dbL));
+        dbR = Math.max(-20, Math.min(3, dbR));
+
+        const targetAngleL = -35 + ((dbL + 20) / 23) * 55;
+        const targetAngleR = -35 + ((dbR + 20) / 23) * 55;
+
+        currentNeedleLeft += (targetAngleL - currentNeedleLeft) * 0.46;
+        currentNeedleRight += (targetAngleR - currentNeedleRight) * 0.46;
+
+        vuNeedleLeft.style.transform = `rotate(${currentNeedleLeft}deg)`;
+        vuNeedleRight.style.transform = `rotate(${currentNeedleRight}deg)`;
+      } else {
+        currentNeedleLeft += (-35 - currentNeedleLeft) * 0.2;
+        currentNeedleRight += (-35 - currentNeedleRight) * 0.2;
+        vuNeedleLeft.style.transform = `rotate(${currentNeedleLeft}deg)`;
+        vuNeedleRight.style.transform = `rotate(${currentNeedleRight}deg)`;
+      }
+
+      requestAnimationFrame(animLoop);
+    }
+
+    // ================= DYNAMIC SPOTIFY-STYLE STREAMING & SEARCH =================
+    async function streamTeluguSongs() {
+      if (isStreaming) return;
+      isStreaming = true;
+      try {
+        let genreParam = '';
+        if (activeFilter === 'mass') genreParam = 'mass';
+        else if (activeFilter === 'melody') genreParam = 'melody';
+        else if (activeFilter === 'romantic') genreParam = 'romantic';
+        else if (activeFilter === 'folk') genreParam = 'folk';
+
+        const url = `/api/search?q=${encodeURIComponent(searchQuery)}&genre=${encodeURIComponent(genreParam)}&p=${streamPage}&limit=25`;
+        const resp = await fetch(url);
+        if (!resp.ok) return;
+        const liveTracks = await resp.json();
+
+        if (Array.isArray(liveTracks)) {
+          liveTracks.forEach(trk => {
+            const newKey = normalizeSongKey(trk.title);
+            const exists = RECORD_TRACKS.some(t => 
+              (t.audioUrl && trk.audioUrl && t.audioUrl === trk.audioUrl) || 
+              (newKey && normalizeSongKey(t.title) === newKey)
+            );
+
+            if (!exists) {
+              RECORD_TRACKS.push({
+                id: 1000 + RECORD_TRACKS.length + 1,
+                trackNum: `TRK-${(RECORD_TRACKS.length + 1).toString().padStart(2, '0')}`,
+                title: trk.title,
+                movie: trk.movie,
+                composer: trk.composer,
+                singers: trk.singers,
+                year: trk.year,
+                duration: trk.duration,
+                durationSec: trk.durationSec,
+                audioUrl: trk.audioUrl,
+                category: genreParam || trk.category || 'all',
+                genre: trk.genre
+              });
+            }
+          });
+
+          renderTracklist();
+        }
+      } catch(e) {
+        console.warn("Streaming err:", e);
+      } finally {
+        isStreaming = false;
+      }
+    }
+
+    // --- Search Autocomplete & Movie Album Cards ---
+    let searchTimer = null;
+    searchInput.addEventListener('input', (e) => {
+      const q = e.target.value.trim();
+      searchQuery = q;
+      searchClear.classList.toggle('hidden', !q);
+      clearTimeout(searchTimer);
+
+      if (!q) {
+        searchSuggestions.classList.add('hidden');
+        searchAlbumCard.classList.add('hidden');
+        renderTracklist();
+        return;
+      }
+
+      searchTimer = setTimeout(() => {
+        fetchSuggestions(q);
+        streamTeluguSongs();
+      }, 250);
+    });
+
+    searchClear.addEventListener('click', () => {
+      searchInput.value = '';
+      searchQuery = '';
+      searchClear.classList.add('hidden');
+      searchSuggestions.classList.add('hidden');
+      searchAlbumCard.classList.add('hidden');
+      renderTracklist();
+    });
+
+    // Close suggestions on outside click
+    document.addEventListener('click', (e) => {
+      if (searchSuggestions && !searchSuggestions.contains(e.target) && e.target !== searchInput) {
+        searchSuggestions.classList.add('hidden');
+        if (topMatchedAlbum && !isAlbumMode) {
+          searchAlbumCard.classList.remove('hidden');
+        }
+      }
+    });
+
+    async function fetchSuggestions(q) {
+      try {
+        const resp = await fetch(`/api/suggest?q=${encodeURIComponent(q)}`);
+        const data = await resp.json();
+        searchSuggestions.innerHTML = '';
+
+        if (data.albums && data.albums.length > 0 && !isAlbumMode) {
+          const candidate = data.albums[0];
+          topMatchedAlbum = candidate;
+          searchAlbumTitle.textContent = candidate.title;
+          searchAlbumSub.textContent = `${candidate.music ? candidate.music + ' • ' : ''}Telugu Album (${candidate.year || '2024'}) • Tap to open`;
+          searchAlbumImg.src = candidate.image || '';
+
+          data.albums.slice(0, 3).forEach(alb => {
+            const item = document.createElement('div');
+            item.className = "p-2 hover:bg-faint flex items-center justify-between cursor-pointer";
+            item.innerHTML = `
+              <div class="flex items-center gap-2 overflow-hidden">
+                <img src="${alb.image}" class="w-7 h-7 rounded border border-ink object-cover" />
+                <div class="truncate">
+                  <p class="font-bold text-xs truncate">${alb.title}</p>
+                  <p class="text-[9px] text-muted truncate">${alb.year || '2024'} • Album</p>
+                </div>
+              </div>
+              <span class="text-[9px] font-bold px-1.5 py-0.5 bg-ink text-paper rounded">ALBUM</span>
+            `;
+            item.addEventListener('click', () => {
+              searchSuggestions.classList.add('hidden');
+              openAlbumView(alb.id);
+            });
+            searchSuggestions.appendChild(item);
+          });
+        } else {
+          topMatchedAlbum = null;
+          searchAlbumCard.classList.add('hidden');
+        }
+
+        if (data.songs && data.songs.length > 0) {
+          data.songs.slice(0, 5).forEach(s => {
+            const item = document.createElement('div');
+            item.className = "p-2 hover:bg-faint flex items-center justify-between cursor-pointer";
+            item.innerHTML = `
+              <div class="truncate mr-2">
+                <p class="font-bold text-xs truncate">${s.title}</p>
+                <p class="text-[9px] text-muted truncate">${s.album || ''} • ${s.singers || ''}</p>
+              </div>
+              <span class="text-[9px] font-bold px-1.5 py-0.5 bg-ink text-paper rounded">PLAY</span>
+            `;
+            item.addEventListener('click', async () => {
+              searchSuggestions.classList.add('hidden');
+              if (topMatchedAlbum && !isAlbumMode) searchAlbumCard.classList.remove('hidden');
+              const sResp = await fetch(`/api/search?q=${encodeURIComponent(s.rawTitle || s.title)}&limit=1`);
+              const sData = await sResp.json();
+              if (sData && sData.length > 0) {
+                RECORD_TRACKS.unshift(sData[0]);
+                loadTrack(0);
+                startMotor();
+              }
+            });
+            searchSuggestions.appendChild(item);
+          });
+        }
+
+        if (searchSuggestions.children.length > 0) {
+          searchAlbumCard.classList.add('hidden');
+          searchSuggestions.classList.remove('hidden');
+        } else {
+          searchSuggestions.classList.add('hidden');
+          if (topMatchedAlbum && !isAlbumMode) searchAlbumCard.classList.remove('hidden');
+        }
+      } catch(e) {}
+    }
+
+    // --- Full Movie Album View ---
+    async function openAlbumView(albumId) {
+      if (!albumId) return;
+      searchSuggestions.classList.add('hidden');
+      searchAlbumCard.classList.add('hidden');
+
+      tracklistContainer.innerHTML = `
+        <div class="p-6 text-center text-muted font-mono text-xs animate-pulse">
+          Opening movie album & loading songs...
+        </div>
+      `;
+
+      try {
+        const res = await fetch(`/api/album?id=${encodeURIComponent(albumId)}`);
+        const data = await res.json();
+        if (!data.songs || data.songs.length === 0) {
+          tracklistContainer.innerHTML = `<div class="p-6 text-center text-muted font-mono text-xs">No tracks found.</div>`;
+          return;
+        }
+
+        isAlbumMode = true;
+        currentAlbumTracks = data.songs;
+        albumViewImg.src = data.image || '';
+        albumViewTitle.textContent = data.title;
+        albumViewComposer.textContent = `Music: ${data.composer || 'Tollywood Soundtracks'} • ${currentAlbumTracks.length} Songs`;
+        albumViewBanner.classList.remove('hidden');
+
+        renderTracklist();
+      } catch(e) {
+        tracklistContainer.innerHTML = `<div class="p-6 text-center text-red-600 font-mono text-xs">Failed to load album.</div>`;
+      }
+    }
+
+    albumCloseBtn.addEventListener('click', () => {
+      isAlbumMode = false;
+      albumViewBanner.classList.add('hidden');
+      renderTracklist();
+    });
+
+    albumPlayAllBtn.addEventListener('click', () => {
+      if (currentAlbumTracks.length > 0) {
+        currentAlbumTracks.forEach(at => {
+          if (!RECORD_TRACKS.some(t => t.audioUrl === at.audioUrl)) RECORD_TRACKS.push(at);
+        });
+        const first = RECORD_TRACKS.findIndex(t => t.audioUrl === currentAlbumTracks[0].audioUrl);
+        if (first !== -1) {
+          loadTrack(first);
+          startMotor();
+        }
+      }
+    });
+
+    searchAlbumCard.addEventListener('click', () => {
+      if (topMatchedAlbum) openAlbumView(topMatchedAlbum.id);
+    });
+
+    // ================= FILTER BUTTONS =================
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        isAlbumMode = false;
+        albumViewBanner.classList.add('hidden');
+        activeFilter = btn.dataset.filter;
+
+        filterBtns.forEach(b => {
+          if (b.dataset.filter === activeFilter) {
+            b.classList.remove('bg-paper', 'text-ink');
+            b.classList.add('bg-ink', 'text-paper');
+          } else {
+            b.classList.remove('bg-ink', 'text-paper');
+            b.classList.add('bg-paper', 'text-ink');
+          }
+        });
+
+        renderTracklist();
+        if (activeFilter === 'mass' || activeFilter === 'melody' || activeFilter === 'romantic' || activeFilter === 'folk') {
+          streamTeluguSongs();
+        }
+      });
+    });
+
+    // ================= CONTROLS & EVENT LISTENERS =================
+    // Platter Tap Toggle
+    dropZone.addEventListener('click', () => toggleMotor());
+
+    btnPlay.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleMotor();
+    });
+
+    btnNext.addEventListener('click', (e) => {
+      e.stopPropagation();
+      nextTrack();
+    });
+
+    btnPrev.addEventListener('click', (e) => {
+      e.stopPropagation();
+      prevTrack();
+    });
+
+    // Crackle Noise Toggle
+    toggleCrackleBtn.addEventListener('click', () => {
+      isCrackleOn = !isCrackleOn;
+      if (isCrackleOn) {
+        startVinylCrackle();
+        crackleDot.className = "w-1.5 h-1.5 rounded-full bg-ink";
+        crackleStatus.textContent = "ON";
+      } else {
+        stopVinylCrackle();
+        crackleDot.className = "w-1.5 h-1.5 rounded-full border border-ink bg-transparent";
+        crackleStatus.textContent = "OFF";
+      }
+    });
+
+    // Repeat Mode
+    btnRepeat.addEventListener('click', () => {
+      repeatMode = (repeatMode + 1) % 3;
+      repeatLabel.textContent = repeatMode === 1 ? "REPEAT: ALL" : (repeatMode === 2 ? "REPEAT: ONE" : "REPEAT: OFF");
+      audioEngine.loop = (repeatMode === 2);
+    });
+
+    // Speed RPM Mode
+    btnSpeed.addEventListener('click', () => {
+      is33RPM = !is33RPM;
+      speedLabel.textContent = is33RPM ? "33 RPM" : "45 RPM";
+      audioEngine.playbackRate = is33RPM ? 1.0 : 1.36;
+    });
+
+    // Sleep Timer Mode
+    function cycleSleepTimer() {
+      sleepMode = (sleepMode + 1) % 4;
+      if (sleepTimerInterval) {
+        clearInterval(sleepTimerInterval);
+        sleepTimerInterval = null;
+      }
+
+      if (sleepMode === 0) {
+        sleepRemainingSec = 0;
+        headerSleepLabel.textContent = "SLEEP: OFF";
+      } else {
+        const mins = sleepMode === 1 ? 15 : (sleepMode === 2 ? 30 : 60);
+        sleepRemainingSec = mins * 60;
+        headerSleepLabel.textContent = `${mins}M`;
+
+        sleepTimerInterval = setInterval(() => {
+          sleepRemainingSec--;
+          if (sleepRemainingSec <= 0) {
+            clearInterval(sleepTimerInterval);
+            sleepTimerInterval = null;
+            sleepMode = 0;
+            headerSleepLabel.textContent = "SLEEP: OFF";
+            if (isMotorRunning) stopMotor();
+          } else {
+            const m = Math.floor(sleepRemainingSec / 60);
+            const s = sleepRemainingSec % 60;
+            headerSleepLabel.textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
+          }
+        }, 1000);
+      }
+    }
+    headerSleepBtn.addEventListener('click', () => cycleSleepTimer());
+
+    // Volume Slider
+    volumeSlider.addEventListener('input', (e) => {
+      volume = parseFloat(e.target.value);
+      if (masterGain && audioCtx) {
+        masterGain.gain.setValueAtTime(volume, audioCtx.currentTime);
+      }
+      audioEngine.volume = volume;
+    });
+
+    // Scrubber Drag
+    seekSlider.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      audioEngine.currentTime = val;
+      currentSeconds = val;
+      timeCurrent.textContent = formatTime(val);
+    });
+
+    // Interactive Emblem Chime
+    interactiveLogo.addEventListener('click', () => {
+      logoBadgeContainer.classList.add('acoustic-broadcasting');
+      playLogoChime();
+      setTimeout(() => logoBadgeContainer.classList.remove('acoustic-broadcasting'), 1500);
+    });
+
+    // Custom Audio File Import
+    headerImportBtn.addEventListener('click', () => fileUploader.click());
+    fileUploader.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      if (!files.length) return;
+
+      files.forEach((file) => {
+        const url = URL.createObjectURL(file);
+        const name = file.name.replace(/\.[^/.]+$/, "");
+        RECORD_TRACKS.unshift({
+          id: Date.now() + Math.random(),
+          trackNum: `CST-${(RECORD_TRACKS.length + 1).toString().padStart(2, '0')}`,
+          title: name,
+          movie: "Personal Upload",
+          composer: "Master Custom Acetate",
+          singers: "Local Artist",
+          year: 2024,
+          duration: "3:30",
+          durationSec: 210,
+          audioUrl: url,
+          isUpload: true,
+          category: "uploads"
+        });
+      });
+
+      renderTracklist();
+      loadTrack(0);
+      startMotor();
+    });
+
+    // ================= INITIALIZATION =================
+    window.addEventListener('DOMContentLoaded', () => {
+      initLikedSongs();
+
+      if (typeof TELUGU_MASTER_CATALOG !== 'undefined' && Array.isArray(TELUGU_MASTER_CATALOG)) {
+        RECORD_TRACKS = deduplicateTracks([...TELUGU_MASTER_CATALOG]);
+      } else {
+        RECORD_TRACKS = [
+          {
+            id: 1,
+            title: "Chuttamalle",
+            movie: "Devara Part 1",
+            composer: "Anirudh Ravichander",
+            year: 2024,
+            duration: "3:42",
+            durationSec: 222,
+            audioUrl: "https://aac.saavncdn.com/313/e49e604945889f330e5b3536dd0ff524_160.mp4"
+          }
+        ];
+      }
+
+      loadTrack(0);
+      renderTracklist();
+      requestAnimationFrame(animLoop);
+
+      // Preload live blockbuster Telugu tracks from JioSaavn in background
+      streamTeluguSongs();
+    });
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(reg => {
+          console.log('[mono Mobile] Service Worker registered:', reg.scope);
+        }).catch(err => {
+          console.warn('[mono Mobile] SW error:', err);
+        });
+      });
+    }
+  </script>
+
+</body>
+</html>
