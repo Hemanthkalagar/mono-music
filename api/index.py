@@ -6,6 +6,10 @@ import base64
 import html
 import re
 import os
+import traceback
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PORT = int(os.environ.get('PORT', 3000))
 
 # DES Decryption Tables
 PC1 = [56, 48, 40, 32, 24, 16, 8, 0, 57, 49, 41, 33, 25, 17, 9, 1, 58, 50, 42, 34, 26, 18, 10, 2, 59, 51, 43, 35,
@@ -98,7 +102,7 @@ def decrypt_jiosaavn(enc_b64):
     except Exception:
         return ""
 
-class TeluguHiFiHandler(http.server.BaseHTTPRequestHandler):
+class handler(http.server.BaseHTTPRequestHandler):
     def send_json(self, data, status=200):
         try:
             body = json.dumps(data, ensure_ascii=False).encode('utf-8')
@@ -107,7 +111,7 @@ class TeluguHiFiHandler(http.server.BaseHTTPRequestHandler):
             self.send_header('Content-Length', str(len(body)))
             self.end_headers()
             self.wfile.write(body)
-        except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError):
+        except Exception:
             pass
 
     def end_headers(self):
@@ -121,328 +125,365 @@ class TeluguHiFiHandler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        raw_path = (self.headers.get('x-forwarded-uri') or 
-                    self.headers.get('x-matched-path') or 
-                    self.headers.get('x-original-url') or 
-                    self.path)
-        parsed = urllib.parse.urlparse(raw_path)
-        query_params = urllib.parse.parse_qs(parsed.query)
-        endpoint = query_params.get('_endpoint', [''])[0].strip().lower()
-        path = parsed.path.rstrip('/')
+        try:
+            raw_path = (self.headers.get('x-forwarded-uri') or 
+                        self.headers.get('x-matched-path') or 
+                        self.headers.get('x-original-url') or 
+                        self.path)
+            parsed = urllib.parse.urlparse(raw_path)
+            query_params = urllib.parse.parse_qs(parsed.query)
+            endpoint = query_params.get('_endpoint', [''])[0].strip().lower()
+            path = parsed.path.rstrip('/')
 
-        # 1. Download Endpoint
-        if endpoint == 'download' or path.endswith('/download'):
-            target_url = query_params.get('url', [''])[0].strip()
-            raw_title = query_params.get('title', ['Telugu_Song'])[0].strip()
-            clean_title = re.sub(r'[^\w\s-]', '', raw_title).strip() or "Telugu_Song"
-            clean_title = clean_title.replace(' ', '_')
-            
-            if not target_url or not target_url.startswith('http'):
-                self.send_response(400)
-                self.end_headers()
-                return
-
-            try:
-                ext = ".m4a" if target_url.endswith('.mp4') else ".mp3"
-                filename = f"{clean_title}{ext}"
-                req = urllib.request.Request(target_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-                with urllib.request.urlopen(req, timeout=15) as remote_stream:
-                    self.send_response(200)
-                    self.send_header('Content-Type', 'audio/mp4' if ext == '.m4a' else 'audio/mpeg')
-                    self.send_header('Content-Disposition', f'attachment; filename="{filename}"')
-                    content_len = remote_stream.headers.get('Content-Length')
-                    if content_len:
-                        self.send_header('Content-Length', content_len)
+            # 1. Download Endpoint
+            if endpoint == 'download' or path.endswith('/download'):
+                target_url = query_params.get('url', [''])[0].strip()
+                raw_title = query_params.get('title', ['Telugu_Song'])[0].strip()
+                clean_title = re.sub(r'[^\w\s-]', '', raw_title).strip() or "Telugu_Song"
+                clean_title = clean_title.replace(' ', '_')
+                
+                if not target_url or not target_url.startswith('http'):
+                    self.send_response(400)
                     self.end_headers()
-                    
-                    while True:
-                        chunk = remote_stream.read(65536)
-                        if not chunk:
-                            break
-                        self.wfile.write(chunk)
-            except Exception as e:
-                print("Download proxy error:", e)
-            return
+                    return
 
-        # 2. Autocomplete Suggest Endpoint
-        if endpoint == 'suggest' or path.endswith('/suggest'):
-            q = query_params.get('q', [''])[0].strip()
-            if not q:
-                self.send_json({"albums": [], "songs": []})
+                try:
+                    ext = ".m4a" if target_url.endswith('.mp4') else ".mp3"
+                    filename = f"{clean_title}{ext}"
+                    req = urllib.request.Request(target_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+                    with urllib.request.urlopen(req, timeout=15) as remote_stream:
+                        self.send_response(200)
+                        self.send_header('Content-Type', 'audio/mp4' if ext == '.m4a' else 'audio/mpeg')
+                        self.send_header('Content-Disposition', f'attachment; filename="{filename}"')
+                        content_len = remote_stream.headers.get('Content-Length')
+                        if content_len:
+                            self.send_header('Content-Length', content_len)
+                        self.end_headers()
+                        
+                        while True:
+                            chunk = remote_stream.read(65536)
+                            if not chunk:
+                                break
+                            self.wfile.write(chunk)
+                except Exception as e:
+                    print("Download proxy error:", e)
                 return
 
-            url = f"https://www.jiosaavn.com/api.php?__call=autocomplete.get&_format=json&_marker=0&cc=in&ctx=web6dot0&query={urllib.parse.quote(q)}"
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-            
-            albums_out = []
-            songs_out = []
-            try:
-                with urllib.request.urlopen(req, timeout=5) as r:
-                    data = json.loads(r.read().decode('utf-8'))
-                    
-                    # Process Telugu Albums
-                    for a in data.get('albums', {}).get('data', []):
-                        lang = (a.get('more_info', {}).get('language') or '').lower()
-                        desc = (a.get('description') or '').lower()
-                        title = html.unescape(a.get('title', '')).strip()
-                        if lang == 'telugu' or 'telugu' in desc or 'telugu' in title.lower() or not lang:
-                            clean_title = re.sub(r'\s*-\s*\(?Telugu\)?', '', title, flags=re.IGNORECASE).strip()
-                            clean_title = clean_title.split('(')[0].strip() if '(' in clean_title and 'telugu' in title.lower() else clean_title
-                            year = a.get('more_info', {}).get('year', '')
-                            if not year:
-                                m = re.search(r'\b(20\d\d|19\d\d)\b', desc)
-                                if m:
-                                    year = m.group(1)
-                            music = a.get('music') or a.get('more_info', {}).get('music') or ''
-                            img = a.get('image', '').replace('50x50.jpg', '150x150.jpg')
-                            albums_out.append({
-                                "id": str(a.get('id', '')),
-                                "title": clean_title,
-                                "rawTitle": title,
-                                "year": year or "2024",
-                                "music": html.unescape(music).strip() if music else "",
-                                "image": img,
-                                "description": html.unescape(a.get('description', '')).strip()
-                            })
-                            
-                    # Process Telugu Songs
-                    seen_song_keys = set()
-                    for s in data.get('songs', {}).get('data', []):
-                        lang = (s.get('more_info', {}).get('language') or '').lower()
-                        desc = (s.get('description') or '').lower()
-                        title = html.unescape(s.get('title', '')).strip()
-                        album = html.unescape(s.get('album', '') or s.get('more_info', {}).get('album', '')).strip()
-                        singers = html.unescape(s.get('more_info', {}).get('singers', '') or s.get('more_info', {}).get('primary_artists', '')).strip()
-                        if lang == 'telugu' or 'telugu' in desc or 'telugu' in title.lower() or not lang:
-                            clean_title = re.sub(r'\s*-\s*\(?Telugu\)?', '', title, flags=re.IGNORECASE).strip()
-                            clean_title = clean_title.split('(')[0].strip() if '(' in clean_title and 'telugu' in title.lower() else clean_title
-                            s_key = re.sub(r'[^a-z0-9]', '', clean_title.lower())
-                            if s_key in seen_song_keys:
-                                continue
-                            seen_song_keys.add(s_key)
-                            img = s.get('image', '').replace('50x50.jpg', '150x150.jpg')
-                            songs_out.append({
-                                "id": str(s.get('id', '')),
-                                "title": clean_title,
-                                "rawTitle": title,
-                                "album": album,
-                                "singers": singers,
-                                "image": img,
-                                "description": html.unescape(s.get('description', '')).strip()
-                            })
-            except Exception as e:
-                print("API suggest error:", e)
+            # 2. Autocomplete Suggest Endpoint
+            if endpoint == 'suggest' or path.endswith('/suggest'):
+                q = query_params.get('q', [''])[0].strip()
+                if not q:
+                    self.send_json({"albums": [], "songs": []})
+                    return
 
-            # Fallback: search.getAlbumResults
-            if not albums_out and len(q) >= 3 and not songs_out:
+                url = f"https://www.jiosaavn.com/api.php?__call=autocomplete.get&_format=json&_marker=0&cc=in&ctx=web6dot0&query={urllib.parse.quote(q)}"
+                req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+                
+                albums_out = []
+                songs_out = []
                 try:
-                    alb_url = f"https://www.jiosaavn.com/api.php?__call=search.getAlbumResults&_format=json&_marker=0&api_version=4&ctx=web6dot0&n=4&p=1&q={urllib.parse.quote(q + ' Telugu')}"
-                    alb_req = urllib.request.Request(alb_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-                    with urllib.request.urlopen(alb_req, timeout=4) as r:
-                        alb_data = json.loads(r.read().decode('utf-8'))
-                        q_words = [w.lower() for w in re.split(r'\s+', q) if len(w) >= 3]
-                        for a in alb_data.get('results', []):
-                            t = html.unescape(a.get('title', '')).strip()
-                            clean_t = re.sub(r'\s*-\s*\(?Telugu\)?', '', t, flags=re.IGNORECASE).strip()
-                            clean_low = clean_t.lower()
-                            is_match = False
-                            if q.lower() in clean_low or clean_low in q.lower():
-                                is_match = True
-                            elif q_words and all(w in clean_low for w in q_words):
-                                is_match = True
-
-                            if is_match:
+                    with urllib.request.urlopen(req, timeout=5) as r:
+                        data = json.loads(r.read().decode('utf-8'))
+                        
+                        for a in data.get('albums', {}).get('data', []):
+                            lang = (a.get('more_info', {}).get('language') or '').lower()
+                            desc = (a.get('description') or '').lower()
+                            title = html.unescape(a.get('title', '')).strip()
+                            if lang == 'telugu' or 'telugu' in desc or 'telugu' in title.lower() or not lang:
+                                clean_title = re.sub(r'\s*-\s*\(?Telugu\)?', '', title, flags=re.IGNORECASE).strip()
+                                clean_title = clean_title.split('(')[0].strip() if '(' in clean_title and 'telugu' in title.lower() else clean_title
+                                year = a.get('more_info', {}).get('year', '')
+                                if not year:
+                                    m = re.search(r'\b(20\d\d|19\d\d)\b', desc)
+                                    if m:
+                                        year = m.group(1)
+                                music = a.get('music') or a.get('more_info', {}).get('music') or ''
+                                img = a.get('image', '').replace('50x50.jpg', '150x150.jpg')
                                 albums_out.append({
                                     "id": str(a.get('id', '')),
-                                    "title": clean_t,
-                                    "rawTitle": t,
-                                    "year": str(a.get('year', '2024')),
-                                    "music": html.unescape(a.get('music', '') or a.get('primary_artists', '')).strip(),
-                                    "image": a.get('image', '').replace('50x50.jpg', '150x150.jpg'),
-                                    "description": html.unescape(a.get('description', '') or f"Telugu Album ({a.get('year', '')})").strip()
+                                    "title": clean_title,
+                                    "rawTitle": title,
+                                    "year": year or "2024",
+                                    "music": html.unescape(music).strip() if music else "",
+                                    "image": img,
+                                    "description": html.unescape(a.get('description', '')).strip()
+                                })
+                                
+                        seen_song_keys = set()
+                        for s in data.get('songs', {}).get('data', []):
+                            lang = (s.get('more_info', {}).get('language') or '').lower()
+                            desc = (s.get('description') or '').lower()
+                            title = html.unescape(s.get('title', '')).strip()
+                            album = html.unescape(s.get('album', '') or s.get('more_info', {}).get('album', '')).strip()
+                            singers = html.unescape(s.get('more_info', {}).get('singers', '') or s.get('more_info', {}).get('primary_artists', '')).strip()
+                            if lang == 'telugu' or 'telugu' in desc or 'telugu' in title.lower() or not lang:
+                                clean_title = re.sub(r'\s*-\s*\(?Telugu\)?', '', title, flags=re.IGNORECASE).strip()
+                                clean_title = clean_title.split('(')[0].strip() if '(' in clean_title and 'telugu' in title.lower() else clean_title
+                                s_key = re.sub(r'[^a-z0-9]', '', clean_title.lower())
+                                if s_key in seen_song_keys:
+                                    continue
+                                seen_song_keys.add(s_key)
+                                img = s.get('image', '').replace('50x50.jpg', '150x150.jpg')
+                                songs_out.append({
+                                    "id": str(s.get('id', '')),
+                                    "title": clean_title,
+                                    "rawTitle": title,
+                                    "album": album,
+                                    "singers": singers,
+                                    "image": img,
+                                    "description": html.unescape(s.get('description', '')).strip()
                                 })
                 except Exception as e:
-                    print("Album search fallback error:", e)
+                    print("API suggest error:", e)
 
-            self.send_json({"albums": albums_out[:6], "songs": songs_out[:8]})
-            return
+                if not albums_out and len(q) >= 3 and not songs_out:
+                    try:
+                        alb_url = f"https://www.jiosaavn.com/api.php?__call=search.getAlbumResults&_format=json&_marker=0&api_version=4&ctx=web6dot0&n=4&p=1&q={urllib.parse.quote(q + ' Telugu')}"
+                        alb_req = urllib.request.Request(alb_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+                        with urllib.request.urlopen(alb_req, timeout=4) as r:
+                            alb_data = json.loads(r.read().decode('utf-8'))
+                            q_words = [w.lower() for w in re.split(r'\s+', q) if len(w) >= 3]
+                            for a in alb_data.get('results', []):
+                                t = html.unescape(a.get('title', '')).strip()
+                                clean_t = re.sub(r'\s*-\s*\(?Telugu\)?', '', t, flags=re.IGNORECASE).strip()
+                                clean_low = clean_t.lower()
+                                is_match = False
+                                if q.lower() in clean_low or clean_low in q.lower():
+                                    is_match = True
+                                elif q_words and all(w in clean_low for w in q_words):
+                                    is_match = True
 
-        # 3. Album Details Endpoint
-        if endpoint == 'album' or path.endswith('/album'):
-            album_id = query_params.get('id', [''])[0].strip()
-            if not album_id:
-                self.send_json({"error": "id parameter required"}, 400)
+                                if is_match:
+                                    albums_out.append({
+                                        "id": str(a.get('id', '')),
+                                        "title": clean_t,
+                                        "rawTitle": t,
+                                        "year": str(a.get('year', '2024')),
+                                        "music": html.unescape(a.get('music', '') or a.get('primary_artists', '')).strip(),
+                                        "image": a.get('image', '').replace('50x50.jpg', '150x150.jpg'),
+                                        "description": html.unescape(a.get('description', '') or f"Telugu Album ({a.get('year', '')})").strip()
+                                    })
+                    except Exception as e:
+                        print("Album search fallback error:", e)
+
+                self.send_json({"albums": albums_out[:6], "songs": songs_out[:8]})
                 return
 
-            url = f"https://www.jiosaavn.com/api.php?__call=content.getAlbumDetails&_format=json&_marker=0&api_version=4&ctx=web6dot0&albumid={urllib.parse.quote(album_id)}"
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-            
-            album_res = None
-            try:
-                with urllib.request.urlopen(req, timeout=6) as r:
-                    data = json.loads(r.read().decode('utf-8'))
-                    raw_title = html.unescape(data.get('title', '')).strip()
-                    clean_title = re.sub(r'\s*-\s*\(?Telugu\)?', '', raw_title, flags=re.IGNORECASE).strip()
-                    clean_title = clean_title.split('(')[0].strip() if '(' in clean_title and 'telugu' in raw_title.lower() else clean_title
-                    
-                    try:
-                        year_val = int(data.get('year') or 2024)
-                    except:
-                        year_val = 2024
-                        
-                    primary_artists = html.unescape(data.get('primary_artists', '') or data.get('music', '') or '').strip()
-                    img = (data.get('image') or '').replace('50x50.jpg', '500x500.jpg').replace('150x150.jpg', '500x500.jpg')
-                    
-                    songs_list = []
-                    for s in data.get('list', []):
-                        enc = s.get('more_info', {}).get('encrypted_media_url')
-                        if not enc:
-                            continue
-                        audio_url = decrypt_jiosaavn(enc)
-                        if not audio_url.startswith('http'):
-                            continue
-                            
-                        s_title = html.unescape(s.get('title', '')).strip()
-                        clean_s_title = re.sub(r'\s*-\s*\(?Telugu\)?', '', s_title, flags=re.IGNORECASE).strip()
-                        clean_s_title = clean_s_title.split('(')[0].strip() if '(' in clean_s_title and 'telugu' in s_title.lower() else clean_s_title
-                        s_singers = html.unescape(s.get('more_info', {}).get('singers', '') or s.get('singers', '') or '').strip()
+            # 3. Album Details Endpoint
+            if endpoint == 'album' or path.endswith('/album'):
+                album_id = query_params.get('id', [''])[0].strip()
+                if not album_id:
+                    self.send_json({"error": "id parameter required"}, 400)
+                    return
+
+                url = f"https://www.jiosaavn.com/api.php?__call=content.getAlbumDetails&_format=json&_marker=0&api_version=4&ctx=web6dot0&albumid={urllib.parse.quote(album_id)}"
+                req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+                
+                album_res = None
+                try:
+                    with urllib.request.urlopen(req, timeout=6) as r:
+                        data = json.loads(r.read().decode('utf-8'))
+                        raw_title = html.unescape(data.get('title', '')).strip()
+                        clean_title = re.sub(r'\s*-\s*\(?Telugu\)?', '', raw_title, flags=re.IGNORECASE).strip()
+                        clean_title = clean_title.split('(')[0].strip() if '(' in clean_title and 'telugu' in raw_title.lower() else clean_title
                         
                         try:
-                            dur_sec = int(s.get('more_info', {}).get('duration') or 210)
-                        except:
-                            dur_sec = 210
-                        dur_min = f"{dur_sec // 60}:{dur_sec % 60:02d}"
-                        
-                        songs_list.append({
-                            "title": clean_s_title,
-                            "movie": clean_title,
-                            "composer": f"{s_singers} • {clean_title} ({year_val})" if s_singers else f"{clean_title} ({year_val})",
-                            "singers": s_singers,
-                            "year": year_val,
-                            "duration": dur_min,
-                            "durationSec": dur_sec,
-                            "audioUrl": audio_url,
-                            "image": img,
-                            "id": str(s.get('id', '')),
-                            "category": "all",
-                            "genre": f"Telugu • {year_val}"
-                        })
-                        
-                    album_res = {
-                        "id": str(album_id),
-                        "title": clean_title,
-                        "rawTitle": raw_title,
-                        "year": year_val,
-                        "composer": primary_artists,
-                        "image": img,
-                        "songs": songs_list
-                    }
-            except Exception as e:
-                print("API album error:", e)
-
-            if not album_res:
-                album_res = {"error": "Failed to load album", "songs": []}
-
-            self.send_json(album_res)
-            return
-
-        # 4. Search Endpoint
-        if endpoint == 'search' or path.endswith('/search'):
-            q = query_params.get('q', [''])[0].strip()
-            year = query_params.get('year', [''])[0].strip()
-            page = int(query_params.get('page', query_params.get('p', [1]))[0])
-            limit = int(query_params.get('limit', [25])[0])
-            limit = min(50, max(1, limit))
-            page = max(1, page)
-            
-            genre = query_params.get('genre', [''])[0].strip().lower()
-            
-            if genre == 'mass':
-                search_query = f"{q} Telugu Dance {year}".strip() if q else (f"Telugu Dance Dhamaka Hits {year}".strip() if year else "Telugu Dance Dhamaka Hits")
-            elif genre == 'melody':
-                search_query = f"{q} Telugu Melody {year}".strip() if q else (f"Telugu Melody Hits {year}".strip() if year else "Telugu Melody Hits")
-            elif genre == 'romantic':
-                search_query = f"{q} Telugu Romantic {year}".strip() if q else (f"Telugu Romantic Hits {year}".strip() if year else "Telugu Romantic Hits")
-            elif genre == 'folk':
-                search_query = f"{q} Telugu Folk Janapada Songs {year}".strip() if q else (f"Telugu Folk Janapada Geethalu {year}".strip() if year else "Telugu Folk Songs Janapada Geethalu Hits")
-            else:
-                parts = []
-                if q:
-                    parts.append(q)
-                if 'telugu' not in [p.lower() for p in parts]:
-                    parts.append("Telugu")
-                if year:
-                    parts.append(str(year))
-                if not q and not year:
-                    parts.append("Blockbuster Hits")
-                search_query = " ".join(parts).strip()
-            
-            fetch_count = min(60, limit * 2)
-            url = f"https://www.jiosaavn.com/api.php?__call=search.getResults&_format=json&_marker=0&api_version=4&ctx=web6dot0&n={fetch_count}&p={page}&q={urllib.parse.quote(search_query)}"
-            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
-            
-            results_out = []
-            seen_titles = set()
-            try:
-                with urllib.request.urlopen(req, timeout=6) as r:
-                    data = json.loads(r.read().decode('utf-8'))
-                    results = data.get('results', [])
-                    for s in results:
-                        enc = s.get('more_info', {}).get('encrypted_media_url')
-                        if not enc:
-                            continue
-                        audio_url = decrypt_jiosaavn(enc)
-                        if not audio_url.startswith('http'):
-                            continue
-                        
-                        raw_title = html.unescape(s.get('title', '')).strip()
-                        clean_title = raw_title.split('(')[0].split('-')[0].strip()
-                        
-                        norm_key = re.sub(r'[^a-z0-9]', '', clean_title.lower())
-                        if not norm_key or norm_key in seen_titles:
-                            continue
-                        seen_titles.add(norm_key)
-
-                        movie = html.unescape(s.get('more_info', {}).get('album', '') or s.get('album', '')).strip()
-                        singers = html.unescape(s.get('more_info', {}).get('singers', '') or s.get('singers', '')).strip()
-                        
-                        try:
-                            year_val = int(s.get('year') or 2024)
+                            year_val = int(data.get('year') or 2024)
                         except:
                             year_val = 2024
                             
-                        try:
-                            dur_sec = int(s.get('more_info', {}).get('duration') or 210)
-                        except:
-                            dur_sec = 210
-                            
-                        dur_min = f"{dur_sec // 60}:{dur_sec % 60:02d}"
+                        primary_artists = html.unescape(data.get('primary_artists', '') or data.get('music', '') or '').strip()
+                        img = (data.get('image') or '').replace('50x50.jpg', '500x500.jpg').replace('150x150.jpg', '500x500.jpg')
                         
-                        results_out.append({
-                            "id": str(s.get('id', '')),
+                        songs_list = []
+                        for s in data.get('list', []):
+                            enc = s.get('more_info', {}).get('encrypted_media_url')
+                            if not enc:
+                                continue
+                            audio_url = decrypt_jiosaavn(enc)
+                            if not audio_url.startswith('http'):
+                                continue
+                                
+                            s_title = html.unescape(s.get('title', '')).strip()
+                            clean_s_title = re.sub(r'\s*-\s*\(?Telugu\)?', '', s_title, flags=re.IGNORECASE).strip()
+                            clean_s_title = clean_s_title.split('(')[0].strip() if '(' in clean_s_title and 'telugu' in s_title.lower() else clean_s_title
+                            s_singers = html.unescape(s.get('more_info', {}).get('singers', '') or s.get('singers', '') or '').strip()
+                            
+                            try:
+                                dur_sec = int(s.get('more_info', {}).get('duration') or 210)
+                            except:
+                                dur_sec = 210
+                            dur_min = f"{dur_sec // 60}:{dur_sec % 60:02d}"
+                            
+                            songs_list.append({
+                                "title": clean_s_title,
+                                "movie": clean_title,
+                                "composer": f"{s_singers} • {clean_title} ({year_val})" if s_singers else f"{clean_title} ({year_val})",
+                                "singers": s_singers,
+                                "year": year_val,
+                                "duration": dur_min,
+                                "durationSec": dur_sec,
+                                "audioUrl": audio_url,
+                                "image": img,
+                                "id": str(s.get('id', '')),
+                                "category": "all",
+                                "genre": f"Telugu • {year_val}"
+                            })
+                            
+                        album_res = {
+                            "id": str(album_id),
                             "title": clean_title,
-                            "movie": movie,
-                            "composer": f"{singers} • {movie} ({year_val})" if singers else f"{movie} ({year_val})",
-                            "singers": singers,
+                            "rawTitle": raw_title,
                             "year": year_val,
-                            "duration": dur_min,
-                            "durationSec": dur_sec,
-                            "audioUrl": audio_url,
-                            "image": s.get('image', '').replace('50x50.jpg', '500x500.jpg') or s.get('image', ''),
-                            "category": genre if genre else "all",
-                            "genre": f"Telugu • {year_val}"
-                        })
-                        if len(results_out) >= limit:
-                            break
-            except Exception as e:
-                print("API search error:", e)
+                            "composer": primary_artists,
+                            "image": img,
+                            "songs": songs_list
+                        }
+                except Exception as e:
+                    print("API album error:", e)
+
+                if not album_res:
+                    album_res = {"error": "Failed to load album", "songs": []}
+
+                self.send_json(album_res)
+                return
+
+            # 4. Search Endpoint
+            if endpoint == 'search' or path.endswith('/search'):
+                q = query_params.get('q', [''])[0].strip()
+                year = query_params.get('year', [''])[0].strip()
+                page = int(query_params.get('page', query_params.get('p', [1]))[0])
+                limit = int(query_params.get('limit', [25])[0])
+                limit = min(50, max(1, limit))
+                page = max(1, page)
                 
-            self.send_json(results_out)
-            return
+                genre = query_params.get('genre', [''])[0].strip().lower()
+                
+                if genre == 'mass':
+                    search_query = f"{q} Telugu Dance {year}".strip() if q else (f"Telugu Dance Dhamaka Hits {year}".strip() if year else "Telugu Dance Dhamaka Hits")
+                elif genre == 'melody':
+                    search_query = f"{q} Telugu Melody {year}".strip() if q else (f"Telugu Melody Hits {year}".strip() if year else "Telugu Melody Hits")
+                elif genre == 'romantic':
+                    search_query = f"{q} Telugu Romantic {year}".strip() if q else (f"Telugu Romantic Hits {year}".strip() if year else "Telugu Romantic Hits")
+                elif genre == 'folk':
+                    search_query = f"{q} Telugu Folk Janapada Songs {year}".strip() if q else (f"Telugu Folk Janapada Geethalu {year}".strip() if year else "Telugu Folk Songs Janapada Geethalu Hits")
+                else:
+                    parts = []
+                    if q:
+                        parts.append(q)
+                    if 'telugu' not in [p.lower() for p in parts]:
+                        parts.append("Telugu")
+                    if year:
+                        parts.append(str(year))
+                    if not q and not year:
+                        parts.append("Blockbuster Hits")
+                    search_query = " ".join(parts).strip()
+                
+                fetch_count = min(60, limit * 2)
+                url = f"https://www.jiosaavn.com/api.php?__call=search.getResults&_format=json&_marker=0&api_version=4&ctx=web6dot0&n={fetch_count}&p={page}&q={urllib.parse.quote(search_query)}"
+                req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+                
+                results_out = []
+                seen_titles = set()
+                try:
+                    with urllib.request.urlopen(req, timeout=6) as r:
+                        data = json.loads(r.read().decode('utf-8'))
+                        results = data.get('results', [])
+                        for s in results:
+                            enc = s.get('more_info', {}).get('encrypted_media_url')
+                            if not enc:
+                                continue
+                            audio_url = decrypt_jiosaavn(enc)
+                            if not audio_url.startswith('http'):
+                                continue
+                            
+                            raw_title = html.unescape(s.get('title', '')).strip()
+                            clean_title = raw_title.split('(')[0].split('-')[0].strip()
+                            
+                            norm_key = re.sub(r'[^a-z0-9]', '', clean_title.lower())
+                            if not norm_key or norm_key in seen_titles:
+                                continue
+                            seen_titles.add(norm_key)
 
-        # Fallback for unknown api route
-        self.send_json({"error": "Endpoint not found", "path": path}, 404)
+                            movie = html.unescape(s.get('more_info', {}).get('album', '') or s.get('album', '')).strip()
+                            singers = html.unescape(s.get('more_info', {}).get('singers', '') or s.get('singers', '')).strip()
+                            
+                            try:
+                                year_val = int(s.get('year') or 2024)
+                            except:
+                                year_val = 2024
+                                
+                            try:
+                                dur_sec = int(s.get('more_info', {}).get('duration') or 210)
+                            except:
+                                dur_sec = 210
+                                
+                            dur_min = f"{dur_sec // 60}:{dur_sec % 60:02d}"
+                            
+                            results_out.append({
+                                "id": str(s.get('id', '')),
+                                "title": clean_title,
+                                "movie": movie,
+                                "composer": f"{singers} • {movie} ({year_val})" if singers else f"{movie} ({year_val})",
+                                "singers": singers,
+                                "year": year_val,
+                                "duration": dur_min,
+                                "durationSec": dur_sec,
+                                "audioUrl": audio_url,
+                                "image": s.get('image', '').replace('50x50.jpg', '500x500.jpg') or s.get('image', ''),
+                                "category": genre if genre else "all",
+                                "genre": f"Telugu • {year_val}"
+                            })
+                            if len(results_out) >= limit:
+                                break
+                except Exception as e:
+                    print("API search error:", e)
+                    
+                self.send_json(results_out)
+                return
 
-# Vercel entrypoint exports
-handler = TeluguHiFiHandler
-app = TeluguHiFiHandler
+            # 5. Static File Serving (fallback for all non-API paths)
+            clean_path = path.lstrip('/')
+            if not clean_path or clean_path in ('index', 'home'):
+                clean_path = 'index.html'
+            elif clean_path in ('mobile', 'mobile/'):
+                clean_path = 'mobile.html'
+
+            file_path = os.path.join(ROOT_DIR, clean_path)
+            if os.path.isfile(file_path):
+                ext = os.path.splitext(clean_path)[1].lower()
+                mime_map = {
+                    '.html': 'text/html; charset=utf-8',
+                    '.js': 'application/javascript; charset=utf-8',
+                    '.json': 'application/json; charset=utf-8',
+                    '.xml': 'application/xml; charset=utf-8',
+                    '.txt': 'text/plain; charset=utf-8',
+                    '.png': 'image/png',
+                    '.jpg': 'image/jpeg',
+                    '.svg': 'image/svg+xml',
+                    '.css': 'text/css; charset=utf-8',
+                    '.ico': 'image/x-icon'
+                }
+                ctype = mime_map.get(ext, 'application/octet-stream')
+                with open(file_path, 'rb') as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header('Content-Type', ctype)
+                self.send_header('Content-Length', str(len(content)))
+                self.end_headers()
+                self.wfile.write(content)
+                return
+
+            # 6. Not found
+            self.send_json({"error": "Not found", "path": path}, 404)
+
+        except Exception as e:
+            err_msg = traceback.format_exc()
+            try:
+                self.send_response(500)
+                self.send_header('Content-Type', 'text/plain; charset=utf-8')
+                self.send_header('Content-Length', str(len(err_msg.encode('utf-8'))))
+                self.end_headers()
+                self.wfile.write(err_msg.encode('utf-8'))
+            except Exception:
+                pass

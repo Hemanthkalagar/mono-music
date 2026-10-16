@@ -7,11 +7,11 @@ import sys
 # Ensure root is in sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from api.index import TeluguHiFiHandler
+from api.index import handler
 
 PORT = int(os.environ.get('PORT', 3000))
 
-class LocalDevHandler(TeluguHiFiHandler, http.server.SimpleHTTPRequestHandler):
+class LocalDevHandler(handler, http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, OPTIONS')
@@ -38,7 +38,7 @@ class LocalDevHandler(TeluguHiFiHandler, http.server.SimpleHTTPRequestHandler):
             return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
         if parsed.path.startswith('/api/'):
-            return TeluguHiFiHandler.do_GET(self)
+            return handler.do_GET(self)
 
         return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
