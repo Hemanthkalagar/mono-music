@@ -1,2 +1,3 @@
 # Ignore local development server so Vercel treats this as a static frontend with /api serverless functions
 server.py
+mono-music-mobile
