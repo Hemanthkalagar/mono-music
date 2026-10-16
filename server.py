@@ -124,7 +124,11 @@ class TeluguHiFiHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        parsed = urllib.parse.urlparse(self.path)
+        raw_path = (self.headers.get('x-forwarded-uri') or 
+                    self.headers.get('x-matched-path') or 
+                    self.headers.get('x-original-url') or 
+                    self.path)
+        parsed = urllib.parse.urlparse(raw_path)
         if parsed.path == '/favicon.ico':
             svg_data = b"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23111111'/><circle cx='50' cy='50' r='18' fill='%23faf9f5'/><circle cx='50' cy='50' r='6' fill='%23111111'/></svg>"
             self.send_response(200)
@@ -478,7 +482,12 @@ class ThreadedHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
     daemon_threads = True
     allow_reuse_address = True
 
+# Vercel Serverless Function Entrypoints
+handler = TeluguHiFiHandler
+app = TeluguHiFiHandler
+
 if __name__ == '__main__':
     with ThreadedHTTPServer(("", PORT), TeluguHiFiHandler) as httpd:
         print(f"Telugu Hi-Fi Production Server listening on http://localhost:{PORT}")
         httpd.serve_forever()
+

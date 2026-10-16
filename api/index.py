@@ -8,3 +8,4 @@ from server import TeluguHiFiHandler
 
 # Vercel Python Serverless Handler
 handler = TeluguHiFiHandler
+app = TeluguHiFiHandler
