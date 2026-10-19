@@ -12,11 +12,14 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { WebView } from 'react-native-webview';
 
+import { VolumeManager } from 'react-native-volume-manager';
+
 const MOBILE_PLAYER_URL = 'https://mono-music-778r.vercel.app/mobile';
 
 export default function App() {
   const webViewRef = useRef(null);
   const [canGoBack, setCanGoBack] = useState(false);
+  const [currentVolume, setCurrentVolume] = useState(0.8);
 
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -32,6 +35,57 @@ export default function App() {
       return () => subscription.remove();
     }
   }, [canGoBack]);
+
+  // Two-way synchronization with Real Phone Hardware Volume
+  useEffect(() => {
+    let volumeListener = null;
+
+    // Fetch initial phone volume
+    VolumeManager.getVolume().then((result) => {
+      const vol = typeof result === 'number' ? result : (result && typeof result.volume === 'number' ? result.volume : 0.8);
+      setCurrentVolume(vol);
+      if (webViewRef.current) {
+        webViewRef.current.postMessage(JSON.stringify({ type: 'VOLUME_CHANGED', volume: vol }));
+      }
+    }).catch(() => {});
+
+    // Listen for physical hardware volume buttons (Volume Up / Down)
+    try {
+      volumeListener = VolumeManager.addVolumeListener((result) => {
+        const vol = typeof result === 'number' ? result : (result && typeof result.volume === 'number' ? result.volume : 0.8);
+        setCurrentVolume(vol);
+        if (webViewRef.current) {
+          webViewRef.current.postMessage(JSON.stringify({ type: 'VOLUME_CHANGED', volume: vol }));
+        }
+      });
+    } catch (err) {
+      console.warn('Volume listener error:', err);
+    }
+
+    return () => {
+      if (volumeListener && typeof volumeListener.remove === 'function') {
+        volumeListener.remove();
+      }
+    };
+  }, []);
+
+  // Handle messages from WebView (e.g. user drags in-app volume slider)
+  const handleMessage = (event) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data && data.type === 'SET_VOLUME') {
+        const targetVol = Math.max(0, Math.min(1, parseFloat(data.volume)));
+        VolumeManager.setVolume(targetVol).catch(() => {});
+      } else if (data && data.type === 'REQUEST_INITIAL_VOLUME') {
+        VolumeManager.getVolume().then((result) => {
+          const vol = typeof result === 'number' ? result : (result && typeof result.volume === 'number' ? result.volume : 0.8);
+          if (webViewRef.current) {
+            webViewRef.current.postMessage(JSON.stringify({ type: 'VOLUME_CHANGED', volume: vol }));
+          }
+        }).catch(() => {});
+      }
+    } catch (e) {}
+  };
 
   const renderLoadingView = () => (
     <View style={styles.loadingContainer}>
@@ -62,7 +116,18 @@ export default function App() {
         startInLoadingState={true}
         renderLoading={renderLoadingView}
         onNavigationStateChange={(navState) => setCanGoBack(navState.canGoBack)}
+        onMessage={handleMessage}
+        androidLayerType="hardware"
         applicationNameForUserAgent="monoMusicApp/1.0.0"
+        onLoadEnd={() => {
+          // Send phone volume once page finishes loading
+          VolumeManager.getVolume().then((result) => {
+            const vol = typeof result === 'number' ? result : (result && typeof result.volume === 'number' ? result.volume : 0.8);
+            if (webViewRef.current) {
+              webViewRef.current.postMessage(JSON.stringify({ type: 'VOLUME_CHANGED', volume: vol }));
+            }
+          }).catch(() => {});
+        }}
       />
     </SafeAreaView>
   );

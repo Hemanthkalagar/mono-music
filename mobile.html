@@ -490,10 +490,13 @@
     let sleepRemainingSec = 0;
     let sleepTimerInterval = null;
 
-    // Album View Mode
+    // Album & Playback Mode
     let isAlbumMode = false;
+    let playbackMode = 'radio'; // 'album' | 'radio'
     let currentAlbumTracks = [];
     let topMatchedAlbum = null;
+    let recentPlayHistory = [];
+    let wakeLock = null;
 
     // Liked Songs
     let likedSongIds = new Set();
@@ -792,6 +795,119 @@
       return folkKeys.some(k => text.includes(k));
     }
 
+    function getSongVibe(t) {
+      if (!t) return 'trending';
+      if (t.category && ['mass', 'melody', 'romantic', 'folk', 'trending'].includes(t.category)) {
+        return t.category;
+      }
+      if (isMassTrack(t)) return 'mass';
+      if (isMelodyTrack(t)) return 'melody';
+      if (isRomanticTrack(t)) return 'romantic';
+      if (isFolkTrack(t)) return 'folk';
+      if (isTrendingTrack(t)) return 'trending';
+      return 'trending';
+    }
+
+    function getSpotifyNextTrack(curTrack) {
+      if (!curTrack || RECORD_TRACKS.length <= 1) {
+        return RECORD_TRACKS[0];
+      }
+
+      const curVibe = getSongVibe(curTrack);
+      const curComposer = (curTrack.composer || '').toLowerCase().trim();
+      const curSingers = (curTrack.singers || '').toLowerCase().trim();
+
+      // Candidate pool excluding current track
+      const candidates = RECORD_TRACKS.filter(t => 
+        t.id !== curTrack.id && 
+        t.audioUrl !== curTrack.audioUrl
+      );
+
+      if (candidates.length === 0) return RECORD_TRACKS[0];
+
+      // Exclude recently played songs (prevent looping)
+      let unplayedCandidates = candidates.filter(t => !recentPlayHistory.includes(t.id));
+      if (unplayedCandidates.length === 0) {
+        recentPlayHistory = recentPlayHistory.slice(-2);
+        unplayedCandidates = candidates.filter(t => !recentPlayHistory.includes(t.id));
+        if (unplayedCandidates.length === 0) unplayedCandidates = candidates;
+      }
+
+      // Filtered track list to strictly avoid the immediate row below
+      const filtered = getFilteredTracks();
+      const curFilterIdx = filtered.findIndex(f => f.id === curTrack.id);
+      const adjacentBelowId = (curFilterIdx !== -1 && curFilterIdx + 1 < filtered.length) ? filtered[curFilterIdx + 1].id : null;
+
+      // Score candidates by similarity to curTrack
+      const scored = unplayedCandidates.map(t => {
+        let score = 0;
+        const tVibe = getSongVibe(t);
+        const tComposer = (t.composer || '').toLowerCase().trim();
+        const tSingers = (t.singers || '').toLowerCase().trim();
+
+        // 1. Same Vibe / Type (e.g. Mass beat, Melody, Romantic, Folk, Trending)
+        if (tVibe === curVibe) score += 25;
+
+        // 2. Same Category Tag
+        if (t.category && curTrack.category && t.category === curTrack.category) score += 15;
+
+        // 3. Same Music Director / Composer
+        if (curComposer && tComposer) {
+          if (curComposer === tComposer) score += 25;
+          else if (curComposer.includes(tComposer) || tComposer.includes(curComposer)) score += 18;
+          else {
+            const topComposers = ['anirudh', 'thaman', 'devi sri prasad', 'dsp', 'keeravani', 'mickey', 'gv prakash', 'harris', 'ar rahman', 'mani sharma', 'vivek'];
+            for (const c of topComposers) {
+              if (curComposer.includes(c) && tComposer.includes(c)) {
+                score += 18;
+                break;
+              }
+            }
+          }
+        }
+
+        // 4. Same Singer
+        if (curSingers && tSingers) {
+          const curSingerList = curSingers.split(/[,&/]/).map(s => s.trim().toLowerCase()).filter(s => s.length > 2);
+          for (const s of curSingerList) {
+            if (tSingers.includes(s)) {
+              score += 10;
+              break;
+            }
+          }
+        }
+
+        // 5. Trending match
+        if (curVibe === 'trending' && isTrendingTrack(t)) score += 15;
+
+        // 6. Era match
+        if (curTrack.year && t.year && Math.abs(curTrack.year - t.year) <= 2) score += 5;
+
+        // Strict penalty against immediately adjacent row below in current list
+        if (adjacentBelowId && t.id === adjacentBelowId) {
+          score -= 30;
+        }
+
+        return { track: t, score };
+      });
+
+      // Sort by score descending
+      scored.sort((a, b) => b.score - a.score);
+
+      // Randomize among top candidates of same type so it's a dynamic Spotify-like radio experience
+      const topCount = Math.min(4, Math.max(1, Math.floor(scored.length * 0.35)));
+      const topPool = scored.slice(0, topCount);
+      const chosen = topPool[Math.floor(Math.random() * topPool.length)].track;
+
+      // Auto-fetch more songs if this vibe's pool in RECORD_TRACKS is getting small
+      const sameVibeTotal = RECORD_TRACKS.filter(t => getSongVibe(t) === curVibe).length;
+      if (sameVibeTotal < 10) {
+        streamTeluguSongs();
+      }
+
+      return chosen;
+    }
+
     function getFilteredTracks() {
       if (isAlbumMode) return currentAlbumTracks;
 
@@ -931,6 +1047,11 @@
 
         // Click Row to Play
         row.addEventListener('click', () => {
+          if (isAlbumMode) {
+            playbackMode = 'album';
+          } else {
+            playbackMode = 'radio';
+          }
           let targetIdx = RECORD_TRACKS.findIndex(t => t.id === track.id || t.audioUrl === track.audioUrl);
           if (targetIdx === -1) {
             RECORD_TRACKS.push(track);
@@ -948,19 +1069,39 @@
     const preBufferEngine = new Audio();
     preBufferEngine.preload = 'auto';
 
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator && !wakeLock) {
+          wakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch(e) {}
+    }
+
+    function releaseWakeLock() {
+      try {
+        if (wakeLock) {
+          wakeLock.release();
+          wakeLock = null;
+        }
+      } catch(e) {}
+    }
+
     function preArmNextTrack() {
       if (RECORD_TRACKS.length === 0) return;
-      const filtered = getFilteredTracks();
       const curTrack = RECORD_TRACKS[currentIdx];
-      const curFilterIdx = curTrack ? filtered.findIndex(t => t.id === curTrack.id) : -1;
-      
       let nextTrackObj = null;
-      if (curFilterIdx !== -1 && filtered.length > 1) {
-        const nextFilterIdx = (curFilterIdx + 1) % filtered.length;
-        nextTrackObj = filtered[nextFilterIdx];
-      } else {
-        const next = (currentIdx + 1) % RECORD_TRACKS.length;
-        nextTrackObj = RECORD_TRACKS[next];
+
+      // 1. ALBUM MODE: Pre-arm next sequential track of the album
+      if (playbackMode === 'album' && currentAlbumTracks && currentAlbumTracks.length > 0) {
+        const curAlbIdx = curTrack ? currentAlbumTracks.findIndex(t => t.id === curTrack.id || t.audioUrl === curTrack.audioUrl) : -1;
+        if (curAlbIdx !== -1 && curAlbIdx < currentAlbumTracks.length - 1) {
+          nextTrackObj = currentAlbumTracks[curAlbIdx + 1];
+        }
+      }
+
+      // 2. SPOTIFY RADIO MODE: Pre-arm similar vibe track
+      if (!nextTrackObj) {
+        nextTrackObj = getSpotifyNextTrack(curTrack);
       }
 
       if (nextTrackObj && nextTrackObj.audioUrl && preBufferEngine.src !== nextTrackObj.audioUrl) {
@@ -974,6 +1115,14 @@
       currentIdx = idx;
       const track = RECORD_TRACKS[currentIdx];
 
+      // Keep recent playback history to avoid repetitive loops
+      if (track && track.id) {
+        if (!recentPlayHistory.includes(track.id)) {
+          recentPlayHistory.push(track.id);
+          if (recentPlayHistory.length > 25) recentPlayHistory.shift();
+        }
+      }
+
       // Update Vinyl Center Label
       vinylLabelTitle.textContent = track.title || 'UNTITLED';
       vinylLabelArtist.textContent = (track.singers || track.composer || 'Tollywood Artists').toUpperCase();
@@ -985,7 +1134,19 @@
       timeTotal.textContent = track.duration || '3:30';
       seekSlider.value = 0;
       seekSlider.max = track.durationSec || 210;
-      nowPlayingSubtext.textContent = `Stylus positioned at Track ${currentIdx + 1}`;
+
+      // Crystal-clear Subtext: Distinct for Album Mode vs Spotify Radio Mode
+      if (playbackMode === 'album' && currentAlbumTracks && currentAlbumTracks.length > 0) {
+        const curAlbIdx = currentAlbumTracks.findIndex(t => t.id === track.id || t.audioUrl === track.audioUrl);
+        if (curAlbIdx !== -1) {
+          nowPlayingSubtext.textContent = `Album: ${track.movie || 'Tollywood'} • Track ${curAlbIdx + 1} of ${currentAlbumTracks.length}`;
+        } else {
+          nowPlayingSubtext.textContent = `Album Mode • Track ${currentIdx + 1}`;
+        }
+      } else {
+        const vibe = getSongVibe(track);
+        nowPlayingSubtext.textContent = `Spotify Radio: ${vibe.toUpperCase()} Vibe • Track ${currentIdx + 1}`;
+      }
 
       // Audio Engine Setup - seamless handoff without pause() when autoStart is true
       if (!autoStart) {
@@ -1013,7 +1174,7 @@
           navigator.mediaSession.setActionHandler('play', () => startMotor());
           navigator.mediaSession.setActionHandler('pause', () => stopMotor());
           navigator.mediaSession.setActionHandler('previoustrack', () => prevTrack());
-          navigator.mediaSession.setActionHandler('nexttrack', () => nextTrack());
+          navigator.mediaSession.setActionHandler('nexttrack', () => nextTrack(true));
         } catch(err) {}
       }
 
@@ -1022,6 +1183,7 @@
       if (autoStart) {
         isMotorRunning = true;
         initAudioGraph();
+        requestWakeLock();
 
         // UI States
         tonearm.classList.remove('tonearm-idle');
@@ -1032,18 +1194,29 @@
         playBtnText.textContent = "STOP MOTOR";
         playIconWrap.innerHTML = `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1"></rect></svg>`;
 
-        audioEngine.play().then(() => {
-          if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
-        }).catch(e => console.warn("Playback error:", e));
+        const playPromise = audioEngine.play();
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+          }).catch(e => {
+            console.warn("Playback error:", e);
+            setTimeout(() => {
+              if (isMotorRunning && audioEngine.paused) {
+                audioEngine.play().catch(() => {});
+              }
+            }, 600);
+          });
+        }
         
         startMasterTimer();
-        setTimeout(preArmNextTrack, 2500);
+        setTimeout(preArmNextTrack, 2000);
       }
     }
 
     function startMotor() {
       isMotorRunning = true;
       initAudioGraph();
+      requestWakeLock();
 
       // UI States
       tonearm.classList.remove('tonearm-idle');
@@ -1068,6 +1241,7 @@
 
     function stopMotor() {
       isMotorRunning = false;
+      releaseWakeLock();
 
       // Lift Tonearm back to resting cradle
       tonearm.classList.remove('tonearm-playing');
@@ -1139,11 +1313,11 @@
       const dur = audioEngine.duration;
       const cur = audioEngine.currentTime;
       if (dur && cur) {
-        if (dur - cur <= 3.5 && !hasPreArmedThisSong) {
+        if (dur - cur <= 6.0 && !hasPreArmedThisSong) {
           hasPreArmedThisSong = true;
           preArmNextTrack();
         }
-        if (dur - cur > 4.5) {
+        if (dur - cur > 7.0) {
           hasPreArmedThisSong = false;
         }
       }
@@ -1151,32 +1325,37 @@
 
     function nextTrack(autoPlay = isMotorRunning) {
       if (RECORD_TRACKS.length === 0) return;
-      const filtered = getFilteredTracks();
       const curTrack = RECORD_TRACKS[currentIdx];
-      const curFilterIdx = curTrack ? filtered.findIndex(t => t.id === curTrack.id) : -1;
 
-      // If approaching end of list, fetch next page in background so queue never empties
-      if (curFilterIdx >= filtered.length - 3) {
-        streamTeluguSongs();
-      }
-
-      if (curFilterIdx !== -1 && filtered.length > 1) {
-        const nextFilterIdx = (curFilterIdx + 1) % filtered.length;
-        const targetTrack = filtered[nextFilterIdx];
-        const gIdx = RECORD_TRACKS.findIndex(t => t.id === targetTrack.id);
-        if (gIdx !== -1) {
+      // 1. ALBUM PLAYBACK MODE: strictly sequential one after another
+      if (playbackMode === 'album' && currentAlbumTracks && currentAlbumTracks.length > 0) {
+        const curAlbIdx = curTrack ? currentAlbumTracks.findIndex(t => t.id === curTrack.id || t.audioUrl === curTrack.audioUrl) : -1;
+        if (curAlbIdx !== -1 && curAlbIdx < currentAlbumTracks.length - 1) {
+          const nextAlbumTrack = currentAlbumTracks[curAlbIdx + 1];
+          let gIdx = RECORD_TRACKS.findIndex(t => t.id === nextAlbumTrack.id || t.audioUrl === nextAlbumTrack.audioUrl);
+          if (gIdx === -1) {
+            RECORD_TRACKS.push(nextAlbumTrack);
+            gIdx = RECORD_TRACKS.length - 1;
+          }
           loadTrack(gIdx, autoPlay);
           return;
+        } else {
+          // Album completed all songs! Seamlessly continue with Spotify radio of matching vibe so playback never stops
+          playbackMode = 'radio';
         }
       }
 
-      // Spotify-style Related Track Fallback: search next track with matching category/vibe
-      const curCat = curTrack ? curTrack.category : 'trending';
-      let relatedIdx = RECORD_TRACKS.findIndex((t, i) => i > currentIdx && (t.category === curCat || (curCat === 'trending' && isTrendingTrack(t))));
-      if (relatedIdx === -1) {
-        relatedIdx = (currentIdx + 1) % RECORD_TRACKS.length;
+      // 2. SPOTIFY-STYLE SAME-TYPE SMART RADIO:
+      // Does NOT play the below row! Plays based on the song's type/vibe/artist
+      const targetTrack = getSpotifyNextTrack(curTrack);
+      if (targetTrack) {
+        let gIdx = RECORD_TRACKS.findIndex(t => t.id === targetTrack.id || t.audioUrl === targetTrack.audioUrl);
+        if (gIdx === -1) {
+          RECORD_TRACKS.push(targetTrack);
+          gIdx = RECORD_TRACKS.length - 1;
+        }
+        loadTrack(gIdx, autoPlay);
       }
-      loadTrack(relatedIdx, autoPlay);
     }
 
     function prevTrack() {
@@ -1185,19 +1364,34 @@
         return;
       }
       if (RECORD_TRACKS.length === 0) return;
-      const filtered = getFilteredTracks();
       const curTrack = RECORD_TRACKS[currentIdx];
-      const curFilterIdx = filtered.findIndex(t => t.id === curTrack.id);
 
-      if (curFilterIdx !== -1 && filtered.length > 1) {
-        const prevFilterIdx = (curFilterIdx - 1 + filtered.length) % filtered.length;
-        const targetTrack = filtered[prevFilterIdx];
-        const gIdx = RECORD_TRACKS.findIndex(t => t.id === targetTrack.id);
-        if (gIdx !== -1) loadTrack(gIdx);
-      } else {
-        const prev = (currentIdx - 1 + RECORD_TRACKS.length) % RECORD_TRACKS.length;
-        loadTrack(prev);
+      // If in album mode, go to previous track in the album
+      if (playbackMode === 'album' && currentAlbumTracks && currentAlbumTracks.length > 0) {
+        const curAlbIdx = curTrack ? currentAlbumTracks.findIndex(t => t.id === curTrack.id || t.audioUrl === curTrack.audioUrl) : -1;
+        if (curAlbIdx > 0) {
+          const prevAlbumTrack = currentAlbumTracks[curAlbIdx - 1];
+          let gIdx = RECORD_TRACKS.findIndex(t => t.id === prevAlbumTrack.id || t.audioUrl === prevAlbumTrack.audioUrl);
+          if (gIdx !== -1) {
+            loadTrack(gIdx);
+            return;
+          }
+        }
       }
+
+      // If in Spotify radio mode, go back to previously played track
+      if (recentPlayHistory.length > 1) {
+        recentPlayHistory.pop(); // remove current
+        const prevId = recentPlayHistory.pop(); // previous
+        const gIdx = RECORD_TRACKS.findIndex(t => t.id === prevId);
+        if (gIdx !== -1) {
+          loadTrack(gIdx);
+          return;
+        }
+      }
+
+      const prev = (currentIdx - 1 + RECORD_TRACKS.length) % RECORD_TRACKS.length;
+      loadTrack(prev);
     }
 
     // ================= REAL-TIME ANIMATION LOOP (VINYL & VU NEEDLES) =================
@@ -1420,6 +1614,9 @@
               const sResp = await fetch(`/api/search?q=${encodeURIComponent(s.rawTitle || s.title)}&limit=1`);
               const sData = await sResp.json();
               if (sData && sData.length > 0) {
+                playbackMode = 'radio';
+                isAlbumMode = false;
+                albumViewBanner.classList.add('hidden');
                 RECORD_TRACKS.unshift(sData[0]);
                 loadTrack(0);
                 startMotor();
@@ -1460,6 +1657,7 @@
         }
 
         isAlbumMode = true;
+        playbackMode = 'album';
         currentAlbumTracks = data.songs;
         albumViewImg.src = data.image || '';
         albumViewTitle.textContent = data.title;
@@ -1474,12 +1672,15 @@
 
     albumCloseBtn.addEventListener('click', () => {
       isAlbumMode = false;
+      playbackMode = 'radio';
       albumViewBanner.classList.add('hidden');
       renderTracklist();
     });
 
     albumPlayAllBtn.addEventListener('click', () => {
       if (currentAlbumTracks.length > 0) {
+        playbackMode = 'album';
+        isAlbumMode = true;
         currentAlbumTracks.forEach(at => {
           if (!RECORD_TRACKS.some(t => t.audioUrl === at.audioUrl)) RECORD_TRACKS.push(at);
         });
@@ -1499,6 +1700,7 @@
     filterBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         isAlbumMode = false;
+        playbackMode = 'radio';
         albumViewBanner.classList.add('hidden');
         activeFilter = btn.dataset.filter;
 
@@ -1635,6 +1837,12 @@
           applyVolume(data.volume, false);
         }
       } catch(e) {}
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && isMotorRunning) {
+        requestWakeLock();
+      }
     });
 
     // Scrubber Drag
