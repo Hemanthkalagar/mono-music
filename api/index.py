@@ -359,7 +359,9 @@ class handler(http.server.BaseHTTPRequestHandler):
                 
                 genre = query_params.get('genre', [''])[0].strip().lower()
                 
-                if genre == 'mass':
+                if genre == 'trending':
+                    search_query = f"{q} Telugu Trending Chartbusters 2024 2025 2026".strip() if q else (f"Telugu Trending Chartbusters {year}".strip() if year else "Telugu Trending Chartbusters 2024 2025")
+                elif genre == 'mass':
                     search_query = f"{q} Telugu Dance {year}".strip() if q else (f"Telugu Dance Dhamaka Hits {year}".strip() if year else "Telugu Dance Dhamaka Hits")
                 elif genre == 'melody':
                     search_query = f"{q} Telugu Melody {year}".strip() if q else (f"Telugu Melody Hits {year}".strip() if year else "Telugu Melody Hits")

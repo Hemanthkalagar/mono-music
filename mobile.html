@@ -48,12 +48,10 @@
   </script>
 
   <style>
-    /* 1964 Vintage Paper Background Pattern */
+    /* 1964 Vintage Paper Solid Background (Dot-Free) */
     body {
       background-color: #f9f8f5;
       color: #111111;
-      background-image: radial-gradient(#111111 0.75px, transparent 0.75px);
-      background-size: 20px 20px;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
     }
@@ -380,7 +378,8 @@
     
     <!-- Top Filter Tabs -->
     <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2 mb-3 font-mono text-[10px] font-bold">
-      <button class="filter-btn px-2.5 py-1 bg-ink text-paper rounded classic-btn flex-shrink-0" data-filter="all">ALL</button>
+      <button class="filter-btn px-2.5 py-1 bg-ink text-paper rounded classic-btn flex-shrink-0" data-filter="trending">TRENDING 🔥</button>
+      <button class="filter-btn px-2.5 py-1 bg-paper text-ink rounded classic-btn flex-shrink-0" data-filter="all">ALL</button>
       <button class="filter-btn px-2.5 py-1 bg-paper text-ink rounded classic-btn flex-shrink-0" data-filter="mass">MASS 🔥</button>
       <button class="filter-btn px-2.5 py-1 bg-paper text-ink rounded classic-btn flex-shrink-0" data-filter="melody">MELODIES 🎵</button>
       <button class="filter-btn px-2.5 py-1 bg-paper text-ink rounded classic-btn flex-shrink-0" data-filter="romantic">ROMANTIC ❤️</button>
@@ -479,7 +478,7 @@
     let currentSeconds = 0;
     let isTransitioning = false;
     let masterTimer = null;
-    let activeFilter = 'all';
+    let activeFilter = 'trending';
     let searchQuery = '';
     let selectedYear = '';
     let streamPage = 1;
@@ -604,6 +603,17 @@
         try {
           mediaSourceNode = audioCtx.createMediaElementSource(audioEngine);
           mediaSourceNode.connect(masterGain);
+        } catch(e) {}
+
+        // Inaudible 20Hz keep-alive carrier so Android OS maintains audio hardware pipeline when screen is off
+        try {
+          const keepAliveOsc = audioCtx.createOscillator();
+          const keepAliveGain = audioCtx.createGain();
+          keepAliveOsc.frequency.setValueAtTime(20, audioCtx.currentTime);
+          keepAliveGain.gain.setValueAtTime(0.00001, audioCtx.currentTime);
+          keepAliveOsc.connect(keepAliveGain);
+          keepAliveGain.connect(audioCtx.destination);
+          keepAliveOsc.start();
         } catch(e) {}
 
         if (isCrackleOn) startVinylCrackle();
@@ -746,6 +756,14 @@
       });
     }
 
+    function isTrendingTrack(t) {
+      if (t.category === 'trending') return true;
+      if (t.year >= 2024) return true;
+      const text = `${t.title} ${t.movie || ''} ${t.composer || ''}`.toLowerCase();
+      const trKeys = ['kissik', 'sooseki', 'peelings', 'chuttamalle', 'daavudi', 'fear', 'raa macha', 'nandanandanaa', 'naanaa hyraanaa', 'kalki', 'kurchi', 'dum masala', 'thandel', 'godari', 'suttamla', 'amaran', 'tillu', 'ayudha', 'devara', 'pushpa', 'game changer', 'sankranthiki', 'lucky baskhar'];
+      return trKeys.some(k => text.includes(k));
+    }
+
     function isMassTrack(t) {
       if (t.category === 'mass') return true;
       const text = `${t.title} ${t.movie || ''} ${t.composer || ''} ${t.singers || ''}`.toLowerCase();
@@ -791,6 +809,7 @@
       }
 
       return RECORD_TRACKS.filter(t => {
+        if (activeFilter === 'trending' && !isTrendingTrack(t)) return false;
         if (activeFilter === 'mass' && !isMassTrack(t)) return false;
         if (activeFilter === 'melody' && !isMelodyTrack(t)) return false;
         if (activeFilter === 'romantic' && !isRomanticTrack(t)) return false;
@@ -925,8 +944,32 @@
       });
     }
 
-    // ================= TRACK LOADING & AUDIO ENGINE =================
-    function loadTrack(idx) {
+    // ================= CONTINUOUS BACKGROUND PLAYBACK & PRE-BUFFERING =================
+    const preBufferEngine = new Audio();
+    preBufferEngine.preload = 'auto';
+
+    function preArmNextTrack() {
+      if (RECORD_TRACKS.length === 0) return;
+      const filtered = getFilteredTracks();
+      const curTrack = RECORD_TRACKS[currentIdx];
+      const curFilterIdx = curTrack ? filtered.findIndex(t => t.id === curTrack.id) : -1;
+      
+      let nextTrackObj = null;
+      if (curFilterIdx !== -1 && filtered.length > 1) {
+        const nextFilterIdx = (curFilterIdx + 1) % filtered.length;
+        nextTrackObj = filtered[nextFilterIdx];
+      } else {
+        const next = (currentIdx + 1) % RECORD_TRACKS.length;
+        nextTrackObj = RECORD_TRACKS[next];
+      }
+
+      if (nextTrackObj && nextTrackObj.audioUrl && preBufferEngine.src !== nextTrackObj.audioUrl) {
+        preBufferEngine.src = nextTrackObj.audioUrl;
+        preBufferEngine.load();
+      }
+    }
+
+    function loadTrack(idx, autoStart = isMotorRunning) {
       if (idx < 0 || idx >= RECORD_TRACKS.length) return;
       currentIdx = idx;
       const track = RECORD_TRACKS[currentIdx];
@@ -944,8 +987,10 @@
       seekSlider.max = track.durationSec || 210;
       nowPlayingSubtext.textContent = `Stylus positioned at Track ${currentIdx + 1}`;
 
-      // Audio Engine Setup
-      audioEngine.pause();
+      // Audio Engine Setup - seamless handoff without pause() when autoStart is true
+      if (!autoStart) {
+        audioEngine.pause();
+      }
       if (track.audioUrl) {
         audioEngine.src = track.audioUrl;
         audioEngine.playbackRate = is33RPM ? 1.0 : 1.36;
@@ -960,10 +1005,11 @@
             artist: track.singers || track.composer || 'Tollywood Artists',
             album: track.movie || 'Telugu Hits',
             artwork: [
-              { src: track.image || '', sizes: '500x500', type: 'image/jpeg' },
-              { src: track.image || '', sizes: '150x150', type: 'image/jpeg' }
+              { src: track.image || 'https://mono-music-778r.vercel.app/assets/icon.png', sizes: '500x500', type: 'image/jpeg' },
+              { src: track.image || 'https://mono-music-778r.vercel.app/assets/icon.png', sizes: '150x150', type: 'image/jpeg' }
             ]
           });
+          navigator.mediaSession.playbackState = autoStart ? 'playing' : 'paused';
           navigator.mediaSession.setActionHandler('play', () => startMotor());
           navigator.mediaSession.setActionHandler('pause', () => stopMotor());
           navigator.mediaSession.setActionHandler('previoustrack', () => prevTrack());
@@ -973,9 +1019,25 @@
 
       renderTracklist();
 
-      if (isMotorRunning) {
-        audioEngine.play().catch(e => console.warn(e));
+      if (autoStart) {
+        isMotorRunning = true;
+        initAudioGraph();
+
+        // UI States
+        tonearm.classList.remove('tonearm-idle');
+        tonearm.classList.add('tonearm-playing');
+        motorLight.classList.remove('bg-paper');
+        motorLight.classList.add('bg-ink');
+        deckStatus.textContent = "MOTOR RUNNING";
+        playBtnText.textContent = "STOP MOTOR";
+        playIconWrap.innerHTML = `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1"></rect></svg>`;
+
+        audioEngine.play().then(() => {
+          if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+        }).catch(e => console.warn("Playback error:", e));
+        
         startMasterTimer();
+        setTimeout(preArmNextTrack, 2500);
       }
     }
 
@@ -996,7 +1058,7 @@
       if (audioEngine.src) {
         audioEngine.play().catch(e => console.warn(e));
       } else if (RECORD_TRACKS.length > 0) {
-        loadTrack(0);
+        loadTrack(0, true);
         return;
       }
 
@@ -1018,6 +1080,7 @@
       playIconWrap.innerHTML = `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>`;
 
       audioEngine.pause();
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
       stopMasterTimer();
       renderTracklist();
     }
@@ -1058,33 +1121,62 @@
       return `${m}:${sec < 10 ? '0' : ''}${sec}`;
     }
 
-    // Audio Event Listeners
+    // Continuous Chained Playback: when song ends, seamlessly play next
     audioEngine.addEventListener('ended', () => {
       if (repeatMode === 2) {
         audioEngine.currentTime = 0;
         audioEngine.play();
-      } else if (repeatMode === 1 || currentIdx < RECORD_TRACKS.length - 1) {
-        nextTrack();
       } else {
-        stopMotor();
+        // Continuous Spotify-style Autoplay: never stop in background!
+        nextTrack(true);
       }
     });
 
-    function nextTrack() {
+    // Pre-arm next track as current track nears completion
+    let hasPreArmedThisSong = false;
+    audioEngine.addEventListener('timeupdate', () => {
+      if (!isMotorRunning) return;
+      const dur = audioEngine.duration;
+      const cur = audioEngine.currentTime;
+      if (dur && cur) {
+        if (dur - cur <= 3.5 && !hasPreArmedThisSong) {
+          hasPreArmedThisSong = true;
+          preArmNextTrack();
+        }
+        if (dur - cur > 4.5) {
+          hasPreArmedThisSong = false;
+        }
+      }
+    });
+
+    function nextTrack(autoPlay = isMotorRunning) {
       if (RECORD_TRACKS.length === 0) return;
       const filtered = getFilteredTracks();
       const curTrack = RECORD_TRACKS[currentIdx];
-      const curFilterIdx = filtered.findIndex(t => t.id === curTrack.id);
+      const curFilterIdx = curTrack ? filtered.findIndex(t => t.id === curTrack.id) : -1;
+
+      // If approaching end of list, fetch next page in background so queue never empties
+      if (curFilterIdx >= filtered.length - 3) {
+        streamTeluguSongs();
+      }
 
       if (curFilterIdx !== -1 && filtered.length > 1) {
         const nextFilterIdx = (curFilterIdx + 1) % filtered.length;
         const targetTrack = filtered[nextFilterIdx];
         const gIdx = RECORD_TRACKS.findIndex(t => t.id === targetTrack.id);
-        if (gIdx !== -1) loadTrack(gIdx);
-      } else {
-        const next = (currentIdx + 1) % RECORD_TRACKS.length;
-        loadTrack(next);
+        if (gIdx !== -1) {
+          loadTrack(gIdx, autoPlay);
+          return;
+        }
       }
+
+      // Spotify-style Related Track Fallback: search next track with matching category/vibe
+      const curCat = curTrack ? curTrack.category : 'trending';
+      let relatedIdx = RECORD_TRACKS.findIndex((t, i) => i > currentIdx && (t.category === curCat || (curCat === 'trending' && isTrendingTrack(t))));
+      if (relatedIdx === -1) {
+        relatedIdx = (currentIdx + 1) % RECORD_TRACKS.length;
+      }
+      loadTrack(relatedIdx, autoPlay);
     }
 
     function prevTrack() {
@@ -1188,7 +1280,8 @@
       isStreaming = true;
       try {
         let genreParam = '';
-        if (activeFilter === 'mass') genreParam = 'mass';
+        if (activeFilter === 'trending') genreParam = 'trending';
+        else if (activeFilter === 'mass') genreParam = 'mass';
         else if (activeFilter === 'melody') genreParam = 'melody';
         else if (activeFilter === 'romantic') genreParam = 'romantic';
         else if (activeFilter === 'folk') genreParam = 'folk';
@@ -1420,7 +1513,7 @@
         });
 
         renderTracklist();
-        if (activeFilter === 'mass' || activeFilter === 'melody' || activeFilter === 'romantic' || activeFilter === 'folk') {
+        if (activeFilter === 'trending' || activeFilter === 'mass' || activeFilter === 'melody' || activeFilter === 'romantic' || activeFilter === 'folk') {
           streamTeluguSongs();
         }
       });
@@ -1507,13 +1600,41 @@
     }
     headerSleepBtn.addEventListener('click', () => cycleSleepTimer());
 
-    // Volume Slider
-    volumeSlider.addEventListener('input', (e) => {
-      volume = parseFloat(e.target.value);
+    // Two-Way Physical Phone Sound & In-App Volume Synchronization
+    function applyVolume(val, notifyNative = true) {
+      volume = Math.max(0, Math.min(1, parseFloat(val)));
+      if (volumeSlider) volumeSlider.value = volume;
       if (masterGain && audioCtx) {
         masterGain.gain.setValueAtTime(volume, audioCtx.currentTime);
       }
       audioEngine.volume = volume;
+
+      if (notifyNative && window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'SET_VOLUME', volume: volume }));
+      }
+    }
+
+    volumeSlider.addEventListener('input', (e) => {
+      applyVolume(e.target.value, true);
+    });
+
+    // Listen to physical volume changes from Android phone via React Native
+    window.addEventListener('message', (event) => {
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (data && data.type === 'VOLUME_CHANGED') {
+          applyVolume(data.volume, false);
+        }
+      } catch(e) {}
+    });
+
+    document.addEventListener('message', (event) => {
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (data && data.type === 'VOLUME_CHANGED') {
+          applyVolume(data.volume, false);
+        }
+      } catch(e) {}
     });
 
     // Scrubber Drag
@@ -1585,6 +1706,11 @@
       loadTrack(0);
       renderTracklist();
       requestAnimationFrame(animLoop);
+
+      // Request current hardware volume from phone
+      if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'REQUEST_INITIAL_VOLUME' }));
+      }
 
       // Preload live blockbuster Telugu tracks from JioSaavn in background
       streamTeluguSongs();
