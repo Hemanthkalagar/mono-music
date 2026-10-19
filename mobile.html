@@ -760,52 +760,106 @@
     }
 
     function isTrendingTrack(t) {
-      if (t.category === 'trending') return true;
+      if (!t) return false;
       if (t.year >= 2024) return true;
       const text = `${t.title} ${t.movie || ''} ${t.composer || ''}`.toLowerCase();
       const trKeys = ['kissik', 'sooseki', 'peelings', 'chuttamalle', 'daavudi', 'fear', 'raa macha', 'nandanandanaa', 'naanaa hyraanaa', 'kalki', 'kurchi', 'dum masala', 'thandel', 'godari', 'suttamla', 'amaran', 'tillu', 'ayudha', 'devara', 'pushpa', 'game changer', 'sankranthiki', 'lucky baskhar'];
       return trKeys.some(k => text.includes(k));
     }
 
-    function isMassTrack(t) {
-      if (t.category === 'mass') return true;
+    function isAnthemMassTrack(t) {
+      if (!t) return false;
       const text = `${t.title} ${t.movie || ''} ${t.composer || ''} ${t.singers || ''}`.toLowerCase();
-      const massKeys = ['mass', 'dance', 'dhamaka', 'beat', 'naatu', 'pushpa', 'fear', 'ayudha', 'kurchi', 'blockbuster', 'party', 'seeti', 'jigelu', 'kummudu', 'pakka', 'dj', 'whistle', 'top lesi', 'cinema chope', 'dhim', 'ammadu', 'jagadame', 'ye mera', 'mirchi', 'bheem', 'gabbarsingh', 'sarileru', 'daavudi', 'peelings', 'kissik', 'mast', 'ringaa', 'boom', 'bommali', 'lungi', 'dhookudu', 'rowdy', 'chanti', 'shankar'];
-      return massKeys.some(k => text.includes(k));
+      const anthemKeys = [
+        'fear song', 'fear', 'ayudha', 'bhairava anthem', 'theme of kalki', 'kalki theme', 
+        'dum masala', 'naatu naatu', 'dosti', 'la la bheemla', 'saahore baahubali', 
+        'saripodhaa', 'sooreede', 'raamam raaghavam', 'ye mera jaha', 'pranaamam', 
+        'bujji thalli', 'suttamla soosi', 'godari gattu', 'hukum', 'badass', 'arjan', 
+        'salaar', 'jagadame', 'mirchi', 'bheem', 'gabbarsingh', 'sarileru', 'dhookudu', 
+        'rowdy', 'pokiri', 'simha', 'legend', 'baahubali'
+      ];
+      return anthemKeys.some(k => text.includes(k));
     }
 
-    function isMelodyTrack(t) {
-      if (t.category === 'melody') return true;
+    function isDanceItemTrack(t) {
+      if (!t) return false;
       const text = `${t.title} ${t.movie || ''} ${t.composer || ''} ${t.singers || ''}`.toLowerCase();
-      const melKeys = ['melody', 'samajavaragamana', 'butta bomma', 'inthandham', 'samayama', 'chuttamalle', 'dheevara', 'priyathama', 'vellipoke', 'idhe', 'ghal ghal', 'nuvvostanante', 'cheppave', 'parichayamila', 'ney veyrey', 'manasaa', 'kanulanu', 'oopiri', 'pranama', 'nammavemo', 'mellaga', 'andala', 'o ante', 'icchesa', 'saahore', 'sweety', 'sitamma', 'seethamma', 'chiru', 'ninnu', 'telusuna', 'urike', 'gundello', 'priya'];
-      return melKeys.some(k => text.includes(k));
+      const danceKeys = [
+        'peelings', 'kissik', 'kurchi', 'daavudi', 'raa macha', 'top lesi', 'cinema choopistha', 
+        'dole dole', 'aa ante', 'nachave nizam', 'langa voni', 'joole joole', 'mawaa enthaina', 
+        'eyy bidda', 'ippatikinka', 'dai dai', 'chinnadamme', 'choopultho guchi', 'a vachi', 
+        'blockbuster', 'seeti maar', 'jigelu', 'pakka local', 'dj tillu', 'radhikaa', 'party'
+      ];
+      return danceKeys.some(k => text.includes(k));
     }
 
-    function isRomanticTrack(t) {
-      if (t.category === 'romantic') return true;
+    function isRomanticDuetTrack(t) {
+      if (!t) return false;
       const text = `${t.title} ${t.movie || ''} ${t.composer || ''} ${t.singers || ''}`.toLowerCase();
-      const romKeys = ['romantic', 'love', 'chuttamalle', 'inthandham', 'adhento', 'kissik', 'hrudayama', 'undipo', 'naa kosam', 'andhamaa', 'priya', 'premalo', 'prema', 'gundellonaa', 'hoyna', 'oorantha', 'chirunavve', 'em sandeham', 'daavudi', 'samayama', 'neeli', 'marugelara', 'valachi', 'manasuna', 'ninnu kori', 'geetha', 'anaganaga'];
+      const romKeys = [
+        'chuttamalle', 'sooseki', 'naanaa hyraanaa', 'anuvanuvuu', 'samajavaragamana', 'buttabomma', 
+        'butta bomma', 'gundellonaa', 'nijame ne', 'urike urike', 'kalaavathi', 'nee kannu neeli', 
+        'jala jala', 'inkem inkem', 'vachindamma', 'priyathama', 'undiporaadhey', 'vachinde', 
+        'hey pillagaada', 'rooba rooba', 'nenu nuvvantu', 'bapu gari', 'jatha kalise', 'anaganaganaga', 
+        'apudo ipudo', 'cheliya', 'nuvvasthanante', 'kaanunna kalyanam', 'ammaadi', 'panchadaara', 
+        'naa kosam', 'hoyna', 'undipo', 'valachi', 'hrudayama'
+      ];
       return romKeys.some(k => text.includes(k));
     }
 
-    function isFolkTrack(t) {
-      if (t.category === 'folk') return true;
+    function isMelodySoulTrack(t) {
+      if (!t) return false;
+      const text = `${t.title} ${t.movie || ''} ${t.composer || ''} ${t.singers || ''}`.toLowerCase();
+      const melKeys = [
+        'nandanandanaa', 'ta takkara', 'inthandham', 'oh sita', 'sirivennela', 'pranavalaya', 
+        'dheera dheera', 'dhivara', 'dheevara', 'mari antaga', 'sitamma vakitlo', 'yentha sakkagunnave', 
+        'entha sakkagunnave', 'bommanu geesthey', 'gala gala', 'mellaga', 'avunu nijam', 'netho cheppana', 
+        'gaaju bomma', 'cheppave chirugali', 'nuvve nuvve', 'kopama', 'neeti mullai', 'samayama', 'vellipoke'
+      ];
+      return melKeys.some(k => text.includes(k));
+    }
+
+    function isFolkTeenmaarTrack(t) {
+      if (!t) return false;
       const text = `${t.title} ${t.movie || ''} ${t.composer || ''} ${t.singers || ''} ${t.genre || ''}`.toLowerCase();
-      const folkKeys = ['folk', 'janapada', 'teenmaar', 'dappu', 'komuram', 'bheem', 'gobbemma', 'bathukamma', 'gangamma', 'pallevasi', 'mallepula', 'saranga', 'dariya', 'bullettu', 'bandi', 'tirupathi', 'ramuloo', 'ramulaa', 'gunzari', 'dj tillu', 'gulaabi', 'jaathara', 'bonalu'];
+      const folkKeys = [
+        'saranga dariya', 'ramuloo ramulaa', 'ramulo ramula', 'komuram bheemudo', 'rangamma mangamma', 
+        'bhalegundi baalaa', 'bullettu bandi', 'gunzari', 'bathukamma', 'teenmaar', 'dappu'
+      ];
       return folkKeys.some(k => text.includes(k));
     }
 
+    function isMassTrack(t) {
+      return isAnthemMassTrack(t) || isDanceItemTrack(t);
+    }
+
+    function isMelodyTrack(t) {
+      return isMelodySoulTrack(t) || isRomanticDuetTrack(t);
+    }
+
+    function isRomanticTrack(t) {
+      return isRomanticDuetTrack(t);
+    }
+
+    function isFolkTrack(t) {
+      return isFolkTeenmaarTrack(t);
+    }
+
     function getSongVibe(t) {
-      if (!t) return 'trending';
-      if (t.category && ['mass', 'melody', 'romantic', 'folk', 'trending'].includes(t.category)) {
-        return t.category;
-      }
-      if (isMassTrack(t)) return 'mass';
-      if (isMelodyTrack(t)) return 'melody';
-      if (isRomanticTrack(t)) return 'romantic';
-      if (isFolkTrack(t)) return 'folk';
-      if (isTrendingTrack(t)) return 'trending';
-      return 'trending';
+      if (!t) return 'anthem_mass';
+      // Musical Archetype Classification (NEVER classify as 'trending' - trending is a chart, not a musical style!)
+      if (isAnthemMassTrack(t)) return 'anthem_mass';
+      if (isDanceItemTrack(t)) return 'dance_item';
+      if (isRomanticDuetTrack(t)) return 'romantic_duet';
+      if (isMelodySoulTrack(t)) return 'melody_soul';
+      if (isFolkTeenmaarTrack(t)) return 'folk_teenmaar';
+
+      if (t.category === 'mass') return 'anthem_mass';
+      if (t.category === 'melody') return 'melody_soul';
+      if (t.category === 'romantic') return 'romantic_duet';
+      if (t.category === 'folk') return 'folk_teenmaar';
+
+      return 'anthem_mass';
     }
 
     function getSpotifyNextTrack(curTrack) {
@@ -814,6 +868,7 @@
       }
 
       const curVibe = getSongVibe(curTrack);
+      const curMovie = (curTrack.movie || '').toLowerCase().replace(/[^a-z0-9]/g, '');
       const curComposer = (curTrack.composer || '').toLowerCase().trim();
       const curSingers = (curTrack.singers || '').toLowerCase().trim();
 
@@ -825,67 +880,77 @@
 
       if (candidates.length === 0) return RECORD_TRACKS[0];
 
-      // Exclude recently played songs (prevent looping)
-      let unplayedCandidates = candidates.filter(t => !recentPlayHistory.includes(t.id));
-      if (unplayedCandidates.length === 0) {
-        recentPlayHistory = recentPlayHistory.slice(-2);
-        unplayedCandidates = candidates.filter(t => !recentPlayHistory.includes(t.id));
-        if (unplayedCandidates.length === 0) unplayedCandidates = candidates;
+      // CRITICAL SPOTIFY RULE: Filter strictly to songs of the SAME MUSICAL VIBE!
+      // (e.g. If playing Fear Song (anthem_mass), do NOT pick Peelings (dance_item))
+      let sameVibeCandidates = candidates.filter(t => getSongVibe(t) === curVibe);
+
+      // If library has fewer than 2 same vibe candidates, broaden to compatible styles
+      if (sameVibeCandidates.length === 0) {
+        if (curVibe === 'anthem_mass') sameVibeCandidates = candidates.filter(t => isMassTrack(t));
+        else if (curVibe === 'romantic_duet') sameVibeCandidates = candidates.filter(t => isMelodyTrack(t) || isRomanticTrack(t));
+        else if (curVibe === 'dance_item') sameVibeCandidates = candidates.filter(t => isMassTrack(t));
+        else sameVibeCandidates = candidates;
       }
 
-      // Filtered track list to strictly avoid the immediate row below
+      // Filter out songs recently played to prevent looping
+      let eligibleCandidates = sameVibeCandidates.filter(t => !recentPlayHistory.includes(t.id));
+      if (eligibleCandidates.length === 0) {
+        recentPlayHistory = recentPlayHistory.slice(-2);
+        eligibleCandidates = sameVibeCandidates.filter(t => !recentPlayHistory.includes(t.id));
+        if (eligibleCandidates.length === 0) eligibleCandidates = sameVibeCandidates;
+      }
+
+      // Strictly penalize the adjacent song below in the current active UI list
       const filtered = getFilteredTracks();
       const curFilterIdx = filtered.findIndex(f => f.id === curTrack.id);
       const adjacentBelowId = (curFilterIdx !== -1 && curFilterIdx + 1 < filtered.length) ? filtered[curFilterIdx + 1].id : null;
 
-      // Score candidates by similarity to curTrack
-      const scored = unplayedCandidates.map(t => {
-        let score = 0;
-        const tVibe = getSongVibe(t);
+      // Score candidates within the same vibe
+      const scored = eligibleCandidates.map(t => {
+        let score = 50; // base score for matching same vibe
+        const tMovie = (t.movie || '').toLowerCase().replace(/[^a-z0-9]/g, '');
         const tComposer = (t.composer || '').toLowerCase().trim();
         const tSingers = (t.singers || '').toLowerCase().trim();
 
-        // 1. Same Vibe / Type (e.g. Mass beat, Melody, Romantic, Folk, Trending)
-        if (tVibe === curVibe) score += 25;
+        // 1. Same Movie Affinity (e.g. Devara Part 1 - Fear Song -> Ayudha Pooja)
+        if (curMovie && tMovie && (curMovie.includes(tMovie) || tMovie.includes(curMovie))) {
+          score += 40;
+        }
 
-        // 2. Same Category Tag
-        if (t.category && curTrack.category && t.category === curTrack.category) score += 15;
-
-        // 3. Same Music Director / Composer
+        // 2. Same Music Director / Composer (e.g. Anirudh, Thaman, DSP)
         if (curComposer && tComposer) {
-          if (curComposer === tComposer) score += 25;
-          else if (curComposer.includes(tComposer) || tComposer.includes(curComposer)) score += 18;
+          if (curComposer === tComposer) score += 30;
+          else if (curComposer.includes(tComposer) || tComposer.includes(curComposer)) score += 20;
           else {
-            const topComposers = ['anirudh', 'thaman', 'devi sri prasad', 'dsp', 'keeravani', 'mickey', 'gv prakash', 'harris', 'ar rahman', 'mani sharma', 'vivek'];
+            const topComposers = ['anirudh', 'thaman', 'devi sri prasad', 'dsp', 'keeravani', 'mickey', 'gv prakash', 'harris', 'ar rahman', 'mani sharma', 'santhosh narayanan'];
             for (const c of topComposers) {
               if (curComposer.includes(c) && tComposer.includes(c)) {
-                score += 18;
+                score += 25;
                 break;
               }
             }
           }
         }
 
-        // 4. Same Singer
+        // 3. Same Singer
         if (curSingers && tSingers) {
           const curSingerList = curSingers.split(/[,&/]/).map(s => s.trim().toLowerCase()).filter(s => s.length > 2);
           for (const s of curSingerList) {
             if (tSingers.includes(s)) {
-              score += 10;
+              score += 15;
               break;
             }
           }
         }
 
-        // 5. Trending match
-        if (curVibe === 'trending' && isTrendingTrack(t)) score += 15;
+        // 4. Same Era (within 1-2 years)
+        if (curTrack.year && t.year && Math.abs(curTrack.year - t.year) <= 2) {
+          score += 10;
+        }
 
-        // 6. Era match
-        if (curTrack.year && t.year && Math.abs(curTrack.year - t.year) <= 2) score += 5;
-
-        // Strict penalty against immediately adjacent row below in current list
+        // Strict penalty against adjacent row below in current list
         if (adjacentBelowId && t.id === adjacentBelowId) {
-          score -= 30;
+          score -= 50;
         }
 
         return { track: t, score };
@@ -894,14 +959,14 @@
       // Sort by score descending
       scored.sort((a, b) => b.score - a.score);
 
-      // Randomize among top candidates of same type so it's a dynamic Spotify-like radio experience
-      const topCount = Math.min(4, Math.max(1, Math.floor(scored.length * 0.35)));
+      // Randomize among top 3 candidates of same vibe for natural variety
+      const topCount = Math.min(3, Math.max(1, Math.floor(scored.length * 0.4)));
       const topPool = scored.slice(0, topCount);
       const chosen = topPool[Math.floor(Math.random() * topPool.length)].track;
 
-      // Auto-fetch more songs if this vibe's pool in RECORD_TRACKS is getting small
+      // Auto-replenish if candidate pool for this vibe is low
       const sameVibeTotal = RECORD_TRACKS.filter(t => getSongVibe(t) === curVibe).length;
-      if (sameVibeTotal < 10) {
+      if (sameVibeTotal < 8) {
         streamTeluguSongs();
       }
 
@@ -1145,7 +1210,12 @@
         }
       } else {
         const vibe = getSongVibe(track);
-        nowPlayingSubtext.textContent = `Spotify Radio: ${vibe.toUpperCase()} Vibe • Track ${currentIdx + 1}`;
+        let vibeLabel = 'MASS ANTHEM';
+        if (vibe === 'dance_item') vibeLabel = 'DANCE DHAMAKA';
+        else if (vibe === 'romantic_duet') vibeLabel = 'ROMANTIC DUET';
+        else if (vibe === 'melody_soul') vibeLabel = 'SOULFUL MELODY';
+        else if (vibe === 'folk_teenmaar') vibeLabel = 'FOLK TEENMAAR';
+        nowPlayingSubtext.textContent = `Spotify Radio: ${vibeLabel} • Track ${currentIdx + 1}`;
       }
 
       // Audio Engine Setup - seamless handoff without pause() when autoStart is true
