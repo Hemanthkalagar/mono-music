@@ -32,6 +32,20 @@
         "projectId": "7f945caa-2dc0-45ad-9751-274cbb52a179"
       }
     },
-    "owner": "hemanth_214.267"
+    "owner": "hemanth_214.267",
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "buildArchs": ["arm64-v8a", "armeabi-v7a"],
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "enablePngCrunchInReleaseBuilds": true,
+            "extraProguardRules": "-keep class com.reactnativecommunity.webview.** { *; }\n-keep class com.n霄.volumemanager.** { *; }\n-keep class com.appfour.volumemanager.** { *; }\n-keep class com.clam319.volumemanager.** { *; }\n-keep class com.volumemanager.** { *; }\n-keep class * extends com.facebook.react.bridge.NativeModule { *; }"
+          }
+        }
+      ]
+    ]
   }
 }
