@@ -18,7 +18,8 @@
         "ACCESS_NETWORK_STATE",
         "WAKE_LOCK",
         "FOREGROUND_SERVICE",
-        "FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+        "FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "POST_NOTIFICATIONS"
       ]
     },
     "ios": {
@@ -38,12 +39,22 @@
         "expo-build-properties",
         {
           "android": {
-            "buildArchs": ["arm64-v8a", "armeabi-v7a"],
+            "buildArchs": [
+              "arm64-v8a",
+              "armeabi-v7a"
+            ],
             "enableMinifyInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": true,
             "enablePngCrunchInReleaseBuilds": true,
-            "extraProguardRules": "-keep class com.reactnativecommunity.webview.** { *; }\n-keep class com.n霄.volumemanager.** { *; }\n-keep class com.appfour.volumemanager.** { *; }\n-keep class com.clam319.volumemanager.** { *; }\n-keep class com.volumemanager.** { *; }\n-keep class * extends com.facebook.react.bridge.NativeModule { *; }"
+            "extraProguardRules": "-keep class com.reactnativecommunity.webview.** { *; }\n-keep class com.n霄.volumemanager.** { *; }\n-keep class com.appfour.volumemanager.** { *; }\n-keep class com.clam319.volumemanager.** { *; }\n-keep class com.volumemanager.** { *; }\n-keep class expo.modules.audio.** { *; }\n-keep class androidx.media3.** { *; }\n-keep class * extends com.facebook.react.bridge.NativeModule { *; }"
           }
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "enableBackgroundPlayback": true,
+          "recordAudioAndroid": false
         }
       ]
     ]

@@ -862,7 +862,7 @@
       return 'anthem_mass';
     }
 
-    function getSpotifyNextTrack(curTrack) {
+    function getSpotifyNextTrack(curTrack, excludedSet = new Set()) {
       if (!curTrack || RECORD_TRACKS.length <= 1) {
         return RECORD_TRACKS[0];
       }
@@ -872,12 +872,17 @@
       const curComposer = (curTrack.composer || '').toLowerCase().trim();
       const curSingers = (curTrack.singers || '').toLowerCase().trim();
 
-      // Candidate pool excluding current track
-      const candidates = RECORD_TRACKS.filter(t => 
+      // Candidate pool excluding current track and excludedSet
+      let candidates = RECORD_TRACKS.filter(t => 
         t.id !== curTrack.id && 
-        t.audioUrl !== curTrack.audioUrl
+        t.audioUrl !== curTrack.audioUrl &&
+        !excludedSet.has(t.id) &&
+        !excludedSet.has(t.audioUrl)
       );
 
+      if (candidates.length === 0) {
+        candidates = RECORD_TRACKS.filter(t => t.id !== curTrack.id && t.audioUrl !== curTrack.audioUrl);
+      }
       if (candidates.length === 0) return RECORD_TRACKS[0];
 
       // CRITICAL SPOTIFY RULE: Filter strictly to songs of the SAME MUSICAL VIBE!
@@ -895,9 +900,7 @@
       // Filter out songs recently played to prevent looping
       let eligibleCandidates = sameVibeCandidates.filter(t => !recentPlayHistory.includes(t.id));
       if (eligibleCandidates.length === 0) {
-        recentPlayHistory = recentPlayHistory.slice(-2);
-        eligibleCandidates = sameVibeCandidates.filter(t => !recentPlayHistory.includes(t.id));
-        if (eligibleCandidates.length === 0) eligibleCandidates = sameVibeCandidates;
+        eligibleCandidates = sameVibeCandidates;
       }
 
       // Strictly penalize the adjacent song below in the current active UI list
@@ -971,6 +974,41 @@
       }
 
       return chosen;
+    }
+
+    // Pre-calculates upcoming song queue for background continuous playback
+    function getUpcomingQueue(startTrack, count = 25) {
+      const queue = [];
+      if (!startTrack) return queue;
+      const seen = new Set();
+      if (startTrack.id) seen.add(startTrack.id);
+      if (startTrack.audioUrl) seen.add(startTrack.audioUrl);
+
+      // 1. ALBUM MODE: Add all remaining tracks of this album sequentially
+      if (playbackMode === 'album' && currentAlbumTracks && currentAlbumTracks.length > 1) {
+        const startIdx = currentAlbumTracks.findIndex(t => t.id === startTrack.id || t.audioUrl === startTrack.audioUrl);
+        if (startIdx !== -1) {
+          for (let i = startIdx + 1; i < currentAlbumTracks.length; i++) {
+            const albTrack = currentAlbumTracks[i];
+            queue.push(albTrack);
+            if (albTrack.id) seen.add(albTrack.id);
+            if (albTrack.audioUrl) seen.add(albTrack.audioUrl);
+          }
+        }
+      }
+
+      // 2. SPOTIFY RADIO: Fill the rest with matching archetype tracks
+      let currentAnchor = queue.length > 0 ? queue[queue.length - 1] : startTrack;
+      while (queue.length < count) {
+        const nextCandidate = getSpotifyNextTrack(currentAnchor, seen);
+        if (!nextCandidate) break;
+        queue.push(nextCandidate);
+        if (nextCandidate.id) seen.add(nextCandidate.id);
+        if (nextCandidate.audioUrl) seen.add(nextCandidate.audioUrl);
+        currentAnchor = nextCandidate;
+      }
+
+      return queue;
     }
 
     function getFilteredTracks() {
@@ -1188,19 +1226,118 @@
         }
       }
 
-      // Update Vinyl Center Label
+      updateTrackUI(track);
+
+      const isNativeApp = !!(window.ReactNativeWebView && window.ReactNativeWebView.postMessage);
+
+      if (isNativeApp) {
+        // Mute & pause internal HTML audio to prevent double playback echo in app
+        audioEngine.pause();
+        audioEngine.muted = true;
+
+        if (autoStart) {
+          isMotorRunning = true;
+          initAudioGraph();
+          requestWakeLock();
+
+          tonearm.classList.remove('tonearm-idle');
+          tonearm.classList.add('tonearm-playing');
+          motorLight.classList.remove('bg-paper');
+          motorLight.classList.add('bg-ink');
+          deckStatus.textContent = "MOTOR RUNNING";
+          playBtnText.textContent = "STOP MOTOR";
+          playIconWrap.innerHTML = `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1"></rect></svg>`;
+
+          const upcomingQueue = getUpcomingQueue(track, 30);
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'PLAY_TRACK',
+            track: track,
+            queue: upcomingQueue,
+            volume: volume,
+            playbackMode: playbackMode,
+            playbackRate: is33RPM ? 1.0 : 1.36
+          }));
+
+          startMasterTimer();
+        }
+      } else {
+        // Pure Web Browser Playback
+        if (!autoStart) {
+          audioEngine.pause();
+        }
+        if (track.audioUrl) {
+          audioEngine.src = track.audioUrl;
+          audioEngine.playbackRate = is33RPM ? 1.0 : 1.36;
+          audioEngine.loop = (repeatMode === 2);
+        }
+
+        // Mobile Lock Screen & Bluetooth Controls for Browser
+        if ('mediaSession' in navigator) {
+          try {
+            navigator.mediaSession.metadata = new MediaMetadata({
+              title: track.title,
+              artist: track.singers || track.composer || 'Tollywood Artists',
+              album: track.movie || 'Telugu Hits',
+              artwork: [
+                { src: track.image || 'https://mono-music-778r.vercel.app/assets/icon.png', sizes: '500x500', type: 'image/jpeg' },
+                { src: track.image || 'https://mono-music-778r.vercel.app/assets/icon.png', sizes: '150x150', type: 'image/jpeg' }
+              ]
+            });
+            navigator.mediaSession.playbackState = autoStart ? 'playing' : 'paused';
+            navigator.mediaSession.setActionHandler('play', () => startMotor());
+            navigator.mediaSession.setActionHandler('pause', () => stopMotor());
+            navigator.mediaSession.setActionHandler('previoustrack', () => prevTrack());
+            navigator.mediaSession.setActionHandler('nexttrack', () => nextTrack(true));
+          } catch(err) {}
+        }
+
+        if (autoStart) {
+          isMotorRunning = true;
+          initAudioGraph();
+          requestWakeLock();
+
+          tonearm.classList.remove('tonearm-idle');
+          tonearm.classList.add('tonearm-playing');
+          motorLight.classList.remove('bg-paper');
+          motorLight.classList.add('bg-ink');
+          deckStatus.textContent = "MOTOR RUNNING";
+          playBtnText.textContent = "STOP MOTOR";
+          playIconWrap.innerHTML = `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1"></rect></svg>`;
+
+          const playPromise = audioEngine.play();
+          if (playPromise !== undefined) {
+            playPromise.then(() => {
+              if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+            }).catch(e => {
+              console.warn("Playback error:", e);
+              setTimeout(() => {
+                if (isMotorRunning && audioEngine.paused) {
+                  audioEngine.play().catch(() => {});
+                }
+              }, 600);
+            });
+          }
+          
+          startMasterTimer();
+          setTimeout(preArmNextTrack, 2000);
+        }
+      }
+
+      renderTracklist();
+    }
+
+    function updateTrackUI(track) {
+      if (!track) return;
       vinylLabelTitle.textContent = track.title || 'UNTITLED';
       vinylLabelArtist.textContent = (track.singers || track.composer || 'Tollywood Artists').toUpperCase();
       vinylLabelSide.textContent = `${track.movie || 'Tollywood'} • ${track.year || '2024'}`;
 
-      // Update Scrubber & Subtext
       currentSeconds = 0;
       timeCurrent.textContent = "0:00";
       timeTotal.textContent = track.duration || '3:30';
       seekSlider.value = 0;
       seekSlider.max = track.durationSec || 210;
 
-      // Crystal-clear Subtext: Distinct for Album Mode vs Spotify Radio Mode
       if (playbackMode === 'album' && currentAlbumTracks && currentAlbumTracks.length > 0) {
         const curAlbIdx = currentAlbumTracks.findIndex(t => t.id === track.id || t.audioUrl === track.audioUrl);
         if (curAlbIdx !== -1) {
@@ -1216,70 +1353,6 @@
         else if (vibe === 'melody_soul') vibeLabel = 'SOULFUL MELODY';
         else if (vibe === 'folk_teenmaar') vibeLabel = 'FOLK TEENMAAR';
         nowPlayingSubtext.textContent = `Spotify Radio: ${vibeLabel} • Track ${currentIdx + 1}`;
-      }
-
-      // Audio Engine Setup - seamless handoff without pause() when autoStart is true
-      if (!autoStart) {
-        audioEngine.pause();
-      }
-      if (track.audioUrl) {
-        audioEngine.src = track.audioUrl;
-        audioEngine.playbackRate = is33RPM ? 1.0 : 1.36;
-        audioEngine.loop = (repeatMode === 2);
-      }
-
-      // Mobile Lock Screen & Bluetooth Controls
-      if ('mediaSession' in navigator) {
-        try {
-          navigator.mediaSession.metadata = new MediaMetadata({
-            title: track.title,
-            artist: track.singers || track.composer || 'Tollywood Artists',
-            album: track.movie || 'Telugu Hits',
-            artwork: [
-              { src: track.image || 'https://mono-music-778r.vercel.app/assets/icon.png', sizes: '500x500', type: 'image/jpeg' },
-              { src: track.image || 'https://mono-music-778r.vercel.app/assets/icon.png', sizes: '150x150', type: 'image/jpeg' }
-            ]
-          });
-          navigator.mediaSession.playbackState = autoStart ? 'playing' : 'paused';
-          navigator.mediaSession.setActionHandler('play', () => startMotor());
-          navigator.mediaSession.setActionHandler('pause', () => stopMotor());
-          navigator.mediaSession.setActionHandler('previoustrack', () => prevTrack());
-          navigator.mediaSession.setActionHandler('nexttrack', () => nextTrack(true));
-        } catch(err) {}
-      }
-
-      renderTracklist();
-
-      if (autoStart) {
-        isMotorRunning = true;
-        initAudioGraph();
-        requestWakeLock();
-
-        // UI States
-        tonearm.classList.remove('tonearm-idle');
-        tonearm.classList.add('tonearm-playing');
-        motorLight.classList.remove('bg-paper');
-        motorLight.classList.add('bg-ink');
-        deckStatus.textContent = "MOTOR RUNNING";
-        playBtnText.textContent = "STOP MOTOR";
-        playIconWrap.innerHTML = `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1"></rect></svg>`;
-
-        const playPromise = audioEngine.play();
-        if (playPromise !== undefined) {
-          playPromise.then(() => {
-            if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
-          }).catch(e => {
-            console.warn("Playback error:", e);
-            setTimeout(() => {
-              if (isMotorRunning && audioEngine.paused) {
-                audioEngine.play().catch(() => {});
-              }
-            }, 600);
-          });
-        }
-        
-        startMasterTimer();
-        setTimeout(preArmNextTrack, 2000);
       }
     }
 
@@ -1298,11 +1371,15 @@
       playBtnText.textContent = "STOP MOTOR";
       playIconWrap.innerHTML = `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1"></rect></svg>`;
 
-      if (audioEngine.src) {
-        audioEngine.play().catch(e => console.warn(e));
-      } else if (RECORD_TRACKS.length > 0) {
-        loadTrack(0, true);
-        return;
+      if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'RESUME' }));
+      } else {
+        if (audioEngine.src) {
+          audioEngine.play().catch(e => console.warn(e));
+        } else if (RECORD_TRACKS.length > 0) {
+          loadTrack(0, true);
+          return;
+        }
       }
 
       startMasterTimer();
@@ -1323,8 +1400,13 @@
       playBtnText.textContent = "START MOTOR";
       playIconWrap.innerHTML = `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>`;
 
-      audioEngine.pause();
-      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+      if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'PAUSE' }));
+      } else {
+        audioEngine.pause();
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+      }
+
       stopMasterTimer();
       renderTracklist();
     }
@@ -1829,13 +1911,20 @@
       repeatMode = (repeatMode + 1) % 3;
       repeatLabel.textContent = repeatMode === 1 ? "REPEAT: ALL" : (repeatMode === 2 ? "REPEAT: ONE" : "REPEAT: OFF");
       audioEngine.loop = (repeatMode === 2);
+      if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'SET_REPEAT_MODE', repeatMode: repeatMode }));
+      }
     });
 
     // Speed RPM Mode
     btnSpeed.addEventListener('click', () => {
       is33RPM = !is33RPM;
       speedLabel.textContent = is33RPM ? "33 RPM" : "45 RPM";
-      audioEngine.playbackRate = is33RPM ? 1.0 : 1.36;
+      const rate = is33RPM ? 1.0 : 1.36;
+      audioEngine.playbackRate = rate;
+      if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'SET_PLAYBACK_RATE', rate: rate }));
+      }
     });
 
     // Sleep Timer Mode
@@ -1890,24 +1979,88 @@
       applyVolume(e.target.value, true);
     });
 
-    // Listen to physical volume changes from Android phone via React Native
-    window.addEventListener('message', (event) => {
+    // Native Bridge Message Dispatcher (Two-way synchronization with Native App)
+    function handleNativeMessage(rawData) {
       try {
-        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-        if (data && data.type === 'VOLUME_CHANGED') {
-          applyVolume(data.volume, false);
-        }
-      } catch(e) {}
-    });
+        const data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+        if (!data) return;
 
-    document.addEventListener('message', (event) => {
-      try {
-        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-        if (data && data.type === 'VOLUME_CHANGED') {
+        if (data.type === 'VOLUME_CHANGED') {
           applyVolume(data.volume, false);
+        } else if (data.type === 'SYNC_CURRENT_TRACK') {
+          handleNativeTrackSync(data.track);
+        } else if (data.type === 'NATIVE_PLAYBACK_STATUS') {
+          handleNativePlaybackStatus(data);
+        } else if (data.type === 'REQUEST_MORE_QUEUE') {
+          const cur = data.currentTrack || RECORD_TRACKS[currentIdx];
+          if (cur && window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+            const moreQueue = getUpcomingQueue(cur, 25);
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'APPEND_QUEUE',
+              queue: moreQueue
+            }));
+          }
         }
       } catch(e) {}
-    });
+    }
+
+    function handleNativeTrackSync(track) {
+      if (!track) return;
+      let gIdx = RECORD_TRACKS.findIndex(t => (track.id && t.id === track.id) || (track.audioUrl && t.audioUrl === track.audioUrl));
+      if (gIdx === -1) {
+        RECORD_TRACKS.push(track);
+        gIdx = RECORD_TRACKS.length - 1;
+      }
+      currentIdx = gIdx;
+      const cur = RECORD_TRACKS[currentIdx];
+      updateTrackUI(cur);
+
+      isMotorRunning = true;
+      tonearm.classList.remove('tonearm-idle');
+      tonearm.classList.add('tonearm-playing');
+      motorLight.classList.remove('bg-paper');
+      motorLight.classList.add('bg-ink');
+      deckStatus.textContent = "MOTOR RUNNING";
+      playBtnText.textContent = "STOP MOTOR";
+      playIconWrap.innerHTML = `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1"></rect></svg>`;
+      renderTracklist();
+    }
+
+    function handleNativePlaybackStatus(data) {
+      if (typeof data.currentTime === 'number') {
+        currentSeconds = data.currentTime;
+        seekSlider.value = currentSeconds;
+        timeCurrent.textContent = formatTime(currentSeconds);
+      }
+      if (typeof data.duration === 'number' && data.duration > 0) {
+        seekSlider.max = data.duration;
+        timeTotal.textContent = formatTime(data.duration);
+      }
+      if (typeof data.isPlaying === 'boolean') {
+        if (data.isPlaying && !isMotorRunning) {
+          isMotorRunning = true;
+          tonearm.classList.remove('tonearm-idle');
+          tonearm.classList.add('tonearm-playing');
+          motorLight.classList.remove('bg-paper');
+          motorLight.classList.add('bg-ink');
+          deckStatus.textContent = "MOTOR RUNNING";
+          playBtnText.textContent = "STOP MOTOR";
+          playIconWrap.innerHTML = `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1"></rect></svg>`;
+        } else if (!data.isPlaying && isMotorRunning) {
+          isMotorRunning = false;
+          tonearm.classList.remove('tonearm-playing');
+          tonearm.classList.add('tonearm-idle');
+          motorLight.classList.remove('bg-ink');
+          motorLight.classList.add('bg-paper');
+          deckStatus.textContent = "DECK IDLE";
+          playBtnText.textContent = "START MOTOR";
+          playIconWrap.innerHTML = `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>`;
+        }
+      }
+    }
+
+    window.addEventListener('message', (event) => handleNativeMessage(event.data));
+    document.addEventListener('message', (event) => handleNativeMessage(event.data));
 
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible' && isMotorRunning) {
@@ -1918,9 +2071,14 @@
     // Scrubber Drag
     seekSlider.addEventListener('input', (e) => {
       const val = parseFloat(e.target.value);
-      audioEngine.currentTime = val;
       currentSeconds = val;
       timeCurrent.textContent = formatTime(val);
+
+      if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'SEEK', position: val }));
+      } else {
+        audioEngine.currentTime = val;
+      }
     });
 
     // Interactive Emblem Chime
